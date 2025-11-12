@@ -1,0 +1,203 @@
+Voice Analysis Application - Project Knowledge Report
+Project Purpose
+A real-time voice analysis application that captures microphone input, analyzes acoustic characteristics (pitch and volume), and provides visual feedback through waveform visualization. Designed primarily for mobile devices with future capability for multi-speaker analysis.
+
+Core Technical Requirements
+1. Audio Capture & Processing
+Input: Browser microphone via MediaStream API
+Audio Settings:
+Echo cancellation: enabled
+Noise suppression: enabled
+Auto-gain control: disabled (preserve natural amplitude variations)
+Processing Framework: Web Audio API
+AudioContext at 48,000 Hz sample rate
+AnalyserNode with FFT size of 2048
+Float32Array buffers for time-domain analysis
+2. Real-Time Analysis (Every 50ms)
+Two parallel acoustic measurements:
+
+Amplitude (Volume) Analysis
+Algorithm: Root Mean Square (RMS) → dBFS conversion
+- Calculate RMS from time-domain buffer
+- Convert to decibel scale: 20 * log10(RMS)
+- Clamp to range: -90 dB to 0 dB
+- Normalize to 0.0-1.0 for visualization
+
+Pitch (Fundamental Frequency) Analysis
+Algorithm: Autocorrelation-based F0 estimation
+- Detection range: 50-500 Hz (covers human voice)
+- Minimum signal threshold: RMS > 0.01
+- Mean-subtracted signal processing
+- Lag search window: sampleRate/500 to sampleRate/50
+- Peak correlation detection
+- Returns null for non-pitched sounds (breathing, plosives)
+
+3. Data Model
+VoiceSample (captured every 50ms):
+
+{
+  timestamp: number;      // Milliseconds from recording start
+  amplitude: number;      // Normalized 0.0-1.0
+  pitchHz: number | null; // Frequency or null if unpitched
+  speakerId?: string;     // Optional: for future multi-speaker support
+}
+
+Recording States:
+
+idle → recording → paused → recording → stopped
+Playback States:
+
+idle → playing ↔ paused
+4. Visualization Mapping
+Pitch → Color (HSL gradient):
+
+Low (80-150 Hz):   Blue/Purple spectrum (240-280° hue)
+Mid (150-250 Hz):  Cyan/Green (280-360°, wraps to 0-40°)
+High (250-400 Hz): Yellow/Red (40-160° hue)
+No pitch:          Gray (neutral)
+Formula: hue = (normalized_pitch * 280 + 240) % 360
+
+Amplitude → Visual Height:
+
+Direct linear mapping: amplitude (0.0-1.0) → bar height percentage
+Minimum bar: 2px (even for silence, for visual continuity)
+Maximum bar: 80% of canvas height (leaves headroom)
+
+5. Performance Requirements
+Frame Rate: 60 FPS minimum on mobile devices
+Rendering: Canvas API (not SVG) for performance
+Sample Rate: New analysis every 50ms (20 Hz update rate)
+Viewport: Small viewport height (svh) to handle mobile browser chrome
+Audio Processing Implementation Details
+Microphone Access
+navigator.mediaDevices.getUserMedia({
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: false
+  },
+  video: false
+})
+
+Pitch Detection (Autocorrelation)
+// Key parameters:
+- FFT_SIZE = 2048
+- sampleRate = 48000 Hz
+- minLag = sampleRate / 500  // ~96 samples
+- maxLag = sampleRate / 50   // ~960 samples
+- RMS threshold = 0.01
+- Correlation threshold = 1e-3
+
+Recording Storage
+Visualization data: Array of VoiceSample objects (timestamp + amplitude + pitch)
+Audio playback: Blob captured via MediaRecorder API (webm format)
+Duration tracking: Millisecond precision using performance timestamps
+Architecture Considerations
+Multi-Voice Support (Future)
+The data model includes speakerId field for future expansion:
+
+Each VoiceSample can be tagged with a speaker identifier
+Enables separate waveform rows per speaker
+Requires additional layer: speaker diarization/identification
+Current implementation: single speaker (speakerId undefined)
+Mobile Optimization Strategy
+Canvas over SVG: 5-10x better performance for rapid updates
+RequestAnimationFrame: Synchronized with display refresh
+Touch targets: Minimum 44×44px (WCAG guidelines)
+Safe areas: Account for notches/home indicators
+Portrait-first: Optimized for 375-428px width
+State Management
+Recording and playback are separate state machines
+Audio analysis runs only during recording state
+Playback uses captured blob, not live stream
+Clean separation enables future features (editing, multi-take)
+Key Algorithms (Proven Working)
+1. RMS Calculation
+function rms(buffer: Float32Array): number {
+  let sum = 0;
+  for (let i = 0; i < buffer.length; i++) {
+    sum += buffer[i] * buffer[i];
+  }
+  return Math.sqrt(sum / buffer.length);
+}
+
+2. RMS to Decibels
+function rmsToDb(r: number): number {
+  let db = 20 * Math.log10(Math.max(r, 1e-8));
+  if (!isFinite(db)) db = -90;
+  return Math.max(-90, Math.min(0, db));
+}
+
+3. Autocorrelation Pitch Detection
+function autoCorrelatePitch(buf: Float32Array, sampleRate: number): number | null {
+  const _rms = rms(buf);
+  if (_rms < 0.01) return null;
+  // Mean-subtract signal
+  const mean = buf.reduce((a, b) => a + b, 0) / buf.length;
+  const sig = new Float32Array(buf.length);
+  for (let i = 0; i < buf.length; i++) sig[i] = buf[i] - mean;
+  // Search for best correlation lag
+  const maxLag = Math.round(sampleRate / 50);   // 50 Hz
+  const minLag = Math.round(sampleRate / 500);  // 500 Hz
+  let bestLag = -1;
+  let bestCorr = 0;
+  for (let lag = minLag; lag <= maxLag; lag++) {
+    let corr = 0;
+    for (let i = 0; i < sig.length - lag; i++) {
+      corr += sig[i] * sig[i + lag];
+    }
+    if (corr > bestCorr) {
+      bestCorr = corr;
+      bestLag = lag;
+    }
+  }
+  if (bestLag < 0 || bestCorr < 1e-3) return null;
+  const freq = sampleRate / bestLag;
+  return (freq >= 50 && freq <= 500) ? freq : null;
+}
+
+4. Pitch to HSL Color
+function pitchToColor(pitchHz: number | null): string {
+  if (pitchHz === null) return "hsl(0 0% 60%)";
+  
+  const minPitch = 80, maxPitch = 400;
+  const clampedPitch = Math.max(minPitch, Math.min(maxPitch, pitchHz));
+  const normalizedPitch = (clampedPitch - minPitch) / (maxPitch - minPitch);
+  
+  const hue = normalizedPitch * 280 + 240;
+  const finalHue = hue > 360 ? hue - 360 : hue;
+  
+  return `hsl(${finalHue} 75% 55%)`;
+}
+
+Technical Constraints & Considerations
+Browser Compatibility
+Requires: MediaStream API, Web Audio API, MediaRecorder API
+Modern browsers only (Chrome, Safari, Edge)
+Microphone permission required (user gesture)
+Performance Bottlenecks
+Canvas redraws: Must batch operations, use requestAnimationFrame
+Sample storage: Array grows during recording (potential memory issue for long recordings)
+Pitch detection: CPU-intensive autocorrelation (50ms budget per analysis)
+Known Limitations
+Pitch detection: Works best for sustained vowel sounds
+Frequency range: 50-500 Hz (excludes very high voices, whispers)
+Silence handling: Returns null pitch, shows as gray bars
+Multiple speakers: Current implementation assumes single speaker
+Mobile App Implementation Priorities
+Core functionality first: Record → Analyze → Visualize loop
+Canvas rendering optimization: 60 FPS is non-negotiable
+Touch-friendly controls: Large targets, bottom-sheet patterns
+Progressive enhancement: Start with basic features, add playback later
+Memory management: Consider sample windowing for long recordings
+Orientation lock: Force portrait or handle landscape gracefully
+Background handling: Save state if app backgrounds mid-recording
+What Works (Validated)
+✅ Web Audio API microphone capture with noise suppression
+✅ Real-time RMS amplitude calculation (50ms intervals)
+✅ Autocorrelation pitch detection (50-500 Hz range)
+✅ Pitch-to-color HSL gradient mapping
+✅ Canvas-based waveform rendering
+✅ MediaRecorder audio blob capture
+✅ HTMLAudioElement playback with seeking
+✅ Multi-state recording lifecycle (record/pause/resume/stop)
