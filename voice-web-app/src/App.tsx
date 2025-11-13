@@ -3,6 +3,7 @@ import { WaveformCanvas } from './components/WaveformCanvas';
 import { RecordingControls } from './components/RecordingControls';
 import { AudioPlayer } from './components/AudioPlayer';
 import { RecordingsList } from './components/RecordingsList';
+import { VoiceMetrics } from './components/VoiceMetrics';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
 import { triggerHaptic } from './utils/haptics';
 
@@ -64,6 +65,12 @@ function App() {
             isPlaying={recordingState === 'recording'}
           />
         </div>
+
+        {(recordingState === 'recording' || recordingState === 'paused') && samples.length > 0 && (
+          <div className="mb-4">
+            <VoiceMetrics samples={samples} />
+          </div>
+        )}
 
         <div className="text-center mb-6">
           <div className="text-6xl font-light tracking-tight text-gray-900">
