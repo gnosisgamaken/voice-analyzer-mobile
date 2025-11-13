@@ -9,7 +9,6 @@ interface AudioPlayerProps {
 
 export function AudioPlayer({ audioUrl, onTimeUpdate, seekTime, onSeekComplete }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -22,13 +21,11 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, seekTime, onSeekComplete }
     };
 
     const handleTimeUpdate = () => {
-      setCurrentTime(audio.currentTime);
       onTimeUpdate?.(audio.currentTime * 1000);
     };
 
     const handleEnded = () => {
       setIsPlaying(false);
-      setCurrentTime(0);
     };
 
     audio.addEventListener('loadedmetadata', handleLoadedMetadata);
