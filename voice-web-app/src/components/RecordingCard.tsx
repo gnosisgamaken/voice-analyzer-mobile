@@ -161,15 +161,17 @@ export function RecordingCard({ recording, onClose, onRename, onDelete, onShare 
             </p>
           </div>
 
-          <WaveformCanvas
-            samples={recording.samples}
-            currentTime={playbackTime}
-            onSeek={(time) => {
-              setUserSeekTime(time);
-              setPlaybackTime(time);
-            }}
-            isPlaying={false}
-          />
+          <div className="mb-6">
+            <WaveformCanvas
+              samples={recording.samples}
+              currentTime={playbackTime}
+              onSeek={(time) => {
+                setUserSeekTime(time);
+                setPlaybackTime(time);
+              }}
+              isPlaying={false}
+            />
+          </div>
 
           {audioUrl && (
             <AudioPlayer

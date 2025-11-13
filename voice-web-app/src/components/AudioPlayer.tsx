@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { triggerHaptic } from '../utils/haptics';
 
 interface AudioPlayerProps {
   audioUrl: string | null;
@@ -51,6 +52,8 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, seekTime, onSeekComplete }
     const audio = audioRef.current;
     if (!audio) return;
 
+    triggerHaptic(isPlaying ? 'light' : 'medium');
+    
     if (isPlaying) {
       audio.pause();
       setIsPlaying(false);
@@ -63,6 +66,7 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, seekTime, onSeekComplete }
   const skip = (seconds: number) => {
     const audio = audioRef.current;
     if (!audio) return;
+    triggerHaptic('light');
     audio.currentTime = Math.max(0, Math.min(duration, audio.currentTime + seconds));
   };
 

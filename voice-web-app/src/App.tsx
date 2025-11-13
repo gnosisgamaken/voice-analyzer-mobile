@@ -32,19 +32,10 @@ function App() {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
   };
 
-  const getTitle = () => {
-    const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
-    return `Voice Recording ${dateStr}`;
-  };
-
   return (
     <div className="min-h-screen bg-apple-gray flex flex-col">
       <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full p-4 sm:p-6">
-        <div className="flex items-center justify-between mb-8 pt-4">
+        <div className="flex items-center justify-between mb-4 pt-4">
           <button 
             onClick={() => {
               triggerHaptic('selection');
@@ -62,20 +53,7 @@ function App() {
           )}
         </div>
 
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2">
-            {getTitle()}
-          </h1>
-          <p className="text-sm text-gray-500">
-            {new Date().toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false 
-            })}
-          </p>
-        </div>
-
-        <div className="mb-8">
+        <div className="flex-1 mb-6 min-h-0">
           <WaveformCanvas 
             samples={samples} 
             currentTime={recordingState === 'stopped' ? playbackTime : undefined}
@@ -87,7 +65,7 @@ function App() {
           />
         </div>
 
-        <div className="text-center mb-8">
+        <div className="text-center mb-6">
           <div className="text-6xl font-light tracking-tight text-gray-900">
             {formatTime(recordingState === 'stopped' ? playbackTime : duration)}
           </div>
@@ -102,7 +80,7 @@ function App() {
           />
         )}
 
-        <div className="mt-auto pt-8">
+        <div className="pt-6">
           <RecordingControls
             recordingState={recordingState}
             onStart={startRecording}
