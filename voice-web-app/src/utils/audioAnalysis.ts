@@ -62,3 +62,23 @@ export function pitchToColor(pitchHz: number | null): string {
 
   return `hsl(${finalHue}, 75%, 55%)`;
 }
+
+export interface EnhancedVoiceFeatures {
+  rms: number;
+  loudness: number;
+  spectralCentroid: number;
+  spectralFlatness: number;
+  spectralFlux: number;
+  spectralSlope: number;
+  zcr: number;
+  mfcc: number[];
+  energy: number;
+}
+
+export interface VoiceMetrics {
+  brightness: number;
+  clarity: number;
+  richness: number;
+  energy: number;
+  pitchStability: number;
+}
