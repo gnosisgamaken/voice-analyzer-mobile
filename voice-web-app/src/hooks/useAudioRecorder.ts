@@ -1,6 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import type { VoiceSample, RecordingState } from '../types';
 import { rms, rmsToDb, dbToNormalized, autoCorrelatePitch } from '../utils/audioAnalysis';
+import { recordingsDB, type StoredRecording } from '../utils/storage';
+import { getCurrentLocation, generateRecordingName } from '../utils/location';
 
 const FFT_SIZE = 2048;
 const ANALYSIS_INTERVAL = 50;
@@ -20,6 +22,7 @@ export function useAudioRecorder() {
   const pauseStartRef = useRef<number>(0);
   const analysisIntervalRef = useRef<number | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
+  const samplesRef = useRef<VoiceSample[]>([]);
 
   const startAnalysis = useCallback(() => {
     if (!analyserRef.current) return;
@@ -48,7 +51,11 @@ export function useAudioRecorder() {
         pitchHz,
       };
 
-      setSamples(prev => [...prev, newSample]);
+      setSamples(prev => {
+        const updated = [...prev, newSample];
+        samplesRef.current = updated;
+        return updated;
+      });
     };
 
     analysisIntervalRef.current = window.setInterval(analyze, ANALYSIS_INTERVAL);
@@ -93,10 +100,33 @@ export function useAudioRecorder() {
         }
       };
 
-      mediaRecorder.onstop = () => {
+      mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
         setAudioUrl(url);
+        
+        const locationName = await getCurrentLocation();
+        const recordingName = generateRecordingName(locationName);
+        
+        const recording: StoredRecording = {
+          id: crypto.randomUUID(),
+          name: recordingName,
+          locationName,
+          timestamp: startTimeRef.current,
+          duration: Date.now() - startTimeRef.current - totalPausedTimeRef.current,
+          audioBlob,
+          samples: samplesRef.current.map(s => ({
+            timestamp: s.timestamp,
+            amplitude: s.amplitude,
+            pitchHz: s.pitchHz,
+          })),
+        };
+        
+        try {
+          await recordingsDB.saveRecording(recording);
+        } catch (error) {
+          console.error('Failed to save recording:', error);
+        }
       };
 
       mediaRecorder.start();

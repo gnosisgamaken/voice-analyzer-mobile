@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { WaveformCanvas } from './components/WaveformCanvas';
 import { RecordingControls } from './components/RecordingControls';
 import { AudioPlayer } from './components/AudioPlayer';
+import { RecordingsList } from './components/RecordingsList';
 import { useAudioRecorder } from './hooks/useAudioRecorder';
+import { triggerHaptic } from './utils/haptics';
 
 function App() {
   const {
@@ -19,6 +21,7 @@ function App() {
 
   const [playbackTime, setPlaybackTime] = useState<number>(0);
   const [userSeekTime, setUserSeekTime] = useState<number | null>(null);
+  const [showRecordings, setShowRecordings] = useState(false);
 
   const formatTime = (ms: number) => {
     const totalSeconds = Math.floor(ms / 1000);
@@ -42,7 +45,13 @@ function App() {
     <div className="min-h-screen bg-apple-gray flex flex-col">
       <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full p-4 sm:p-6">
         <div className="flex items-center justify-between mb-8 pt-4">
-          <button className="w-10 h-10 rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center touch-manipulation">
+          <button 
+            onClick={() => {
+              triggerHaptic('selection');
+              setShowRecordings(true);
+            }}
+            className="w-10 h-10 rounded-full hover:bg-gray-200 active:bg-gray-300 transition-colors flex items-center justify-center touch-manipulation"
+          >
             <span className="text-2xl text-gray-600">⋯</span>
           </button>
           
@@ -104,6 +113,11 @@ function App() {
           />
         </div>
       </div>
+
+      <RecordingsList 
+        isOpen={showRecordings} 
+        onClose={() => setShowRecordings(false)} 
+      />
     </div>
   );
 }

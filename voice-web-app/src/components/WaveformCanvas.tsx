@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import type { VoiceSample } from '../types';
+import { pitchToColor } from '../utils/pitchToColor';
 
 interface WaveformCanvasProps {
   samples: VoiceSample[];
@@ -47,7 +48,7 @@ export function WaveformCanvas({ samples, currentTime, onSeek, isPlaying }: Wave
       const barHeight = normalizedHeight * height * 0.8;
       const y = (height - barHeight) / 2;
 
-      ctx.fillStyle = '#FF3B30';
+      ctx.fillStyle = pitchToColor(sample.pitchHz);
       ctx.fillRect(x, y, barWidth, Math.max(2, barHeight));
     });
 

@@ -1,4 +1,5 @@
 import type { RecordingState } from '../types';
+import { triggerHaptic } from '../utils/haptics';
 
 interface RecordingControlsProps {
   recordingState: RecordingState;
@@ -21,7 +22,10 @@ export function RecordingControls({
     <div className="flex flex-col items-center gap-6 py-6">
       {recordingState === 'idle' && (
         <button
-          onClick={onStart}
+          onClick={() => {
+            triggerHaptic('medium');
+            onStart();
+          }}
           className="w-20 h-20 rounded-full bg-apple-red shadow-lg active:scale-95 transition-transform touch-manipulation flex items-center justify-center"
         >
           <div className="w-6 h-6 rounded-full bg-white" />
@@ -31,7 +35,10 @@ export function RecordingControls({
       {recordingState === 'recording' && (
         <div className="flex items-center gap-8">
           <button
-            onClick={onPause}
+            onClick={() => {
+              triggerHaptic('light');
+              onPause();
+            }}
             className="w-20 h-20 rounded-full bg-apple-red shadow-lg active:scale-95 transition-transform touch-manipulation flex items-center justify-center"
           >
             <div className="flex gap-1.5">
@@ -40,7 +47,10 @@ export function RecordingControls({
             </div>
           </button>
           <button
-            onClick={onStop}
+            onClick={() => {
+              triggerHaptic('medium');
+              onStop();
+            }}
             className="w-14 h-14 rounded-full bg-gray-300 shadow-md active:scale-95 transition-transform touch-manipulation flex items-center justify-center"
           >
             <div className="w-5 h-5 bg-gray-600 rounded" />
@@ -51,13 +61,19 @@ export function RecordingControls({
       {recordingState === 'paused' && (
         <div className="flex items-center gap-8">
           <button
-            onClick={onResume}
+            onClick={() => {
+              triggerHaptic('medium');
+              onResume();
+            }}
             className="w-20 h-20 rounded-full bg-apple-red shadow-lg active:scale-95 transition-transform touch-manipulation flex items-center justify-center"
           >
             <div className="w-6 h-6 rounded-full bg-white" />
           </button>
           <button
-            onClick={onStop}
+            onClick={() => {
+              triggerHaptic('medium');
+              onStop();
+            }}
             className="w-14 h-14 rounded-full bg-gray-300 shadow-md active:scale-95 transition-transform touch-manipulation flex items-center justify-center"
           >
             <div className="w-5 h-5 bg-gray-600 rounded" />
@@ -67,7 +83,10 @@ export function RecordingControls({
 
       {recordingState === 'stopped' && (
         <button
-          onClick={onReset}
+          onClick={() => {
+            triggerHaptic('light');
+            onReset();
+          }}
           className="px-8 py-3 rounded-full bg-blue-500 text-white font-medium shadow-md active:scale-95 transition-transform touch-manipulation"
         >
           New Recording
