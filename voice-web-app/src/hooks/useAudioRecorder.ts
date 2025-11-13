@@ -3,6 +3,7 @@ import type { VoiceSample, RecordingState } from '../types';
 import { rms, rmsToDb, dbToNormalized, autoCorrelatePitch } from '../utils/audioAnalysis';
 import { recordingsDB, type StoredRecording } from '../utils/storage';
 import { getCurrentLocation, generateRecordingName } from '../utils/location';
+import { VoiceAnalyzer } from '../utils/enhancedAudioAnalysis';
 
 const FFT_SIZE = 2048;
 const ANALYSIS_INTERVAL = 50;
@@ -24,6 +25,7 @@ export function useAudioRecorder() {
   const audioChunksRef = useRef<Blob[]>([]);
   const samplesRef = useRef<VoiceSample[]>([]);
   const audioUrlRef = useRef<string | null>(null);
+  const voiceAnalyzerRef = useRef<VoiceAnalyzer | null>(null);
 
   const startAnalysis = useCallback(() => {
     if (!analyserRef.current) return;
@@ -46,10 +48,26 @@ export function useAudioRecorder() {
       const amplitude = dbToNormalized(db);
       const pitchHz = autoCorrelatePitch(dataArray, sampleRate);
 
+      const enhancedFeatures = voiceAnalyzerRef.current?.extractFeatures(pitchHz);
+      const voiceMetrics = enhancedFeatures
+        ? voiceAnalyzerRef.current?.calculateMetrics(enhancedFeatures)
+        : undefined;
+
       const newSample: VoiceSample = {
         timestamp: currentTime,
         amplitude,
         pitchHz,
+        enhancedFeatures: enhancedFeatures
+          ? {
+              spectralCentroid: enhancedFeatures.spectralCentroid,
+              spectralFlatness: enhancedFeatures.spectralFlatness,
+              spectralFlux: enhancedFeatures.spectralFlux,
+              loudness: enhancedFeatures.loudness,
+              energy: enhancedFeatures.energy,
+              zcr: enhancedFeatures.zcr,
+            }
+          : undefined,
+        voiceMetrics,
       };
 
       setSamples(prev => {
@@ -90,6 +108,9 @@ export function useAudioRecorder() {
       source.connect(analyser);
 
       analyserRef.current = analyser;
+
+      voiceAnalyzerRef.current = new VoiceAnalyzer();
+      voiceAnalyzerRef.current.createAnalyzer(audioContext, source);
 
       const options: MediaRecorderOptions = {};
       const mimeTypes = [
@@ -191,6 +212,11 @@ export function useAudioRecorder() {
   const stopRecording = useCallback(() => {
     stopAnalysis();
 
+    if (voiceAnalyzerRef.current) {
+      voiceAnalyzerRef.current.stop();
+      voiceAnalyzerRef.current = null;
+    }
+
     if (mediaRecorderRef.current) {
       mediaRecorderRef.current.stop();
     }
@@ -221,6 +247,9 @@ export function useAudioRecorder() {
   useEffect(() => {
     return () => {
       stopAnalysis();
+      if (voiceAnalyzerRef.current) {
+        voiceAnalyzerRef.current.stop();
+      }
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
