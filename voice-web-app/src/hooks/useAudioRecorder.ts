@@ -23,6 +23,7 @@ export function useAudioRecorder() {
   const analysisIntervalRef = useRef<number | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const samplesRef = useRef<VoiceSample[]>([]);
+  const audioUrlRef = useRef<string | null>(null);
 
   const startAnalysis = useCallback(() => {
     if (!analyserRef.current) return;
@@ -103,6 +104,7 @@ export function useAudioRecorder() {
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
         const url = URL.createObjectURL(audioBlob);
+        audioUrlRef.current = url;
         setAudioUrl(url);
         
         const locationName = await getCurrentLocation();
@@ -136,6 +138,11 @@ export function useAudioRecorder() {
       setRecordingState('recording');
       setSamples([]);
       setDuration(0);
+      
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
+        audioUrlRef.current = null;
+      }
       setAudioUrl(null);
 
       startAnalysis();
@@ -182,15 +189,16 @@ export function useAudioRecorder() {
   }, [stopAnalysis]);
 
   const reset = useCallback(() => {
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
+    if (audioUrlRef.current) {
+      URL.revokeObjectURL(audioUrlRef.current);
+      audioUrlRef.current = null;
     }
     setSamples([]);
     setDuration(0);
     setAudioUrl(null);
     setRecordingState('idle');
     audioChunksRef.current = [];
-  }, [audioUrl]);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -201,11 +209,11 @@ export function useAudioRecorder() {
       if (audioContextRef.current) {
         audioContextRef.current.close();
       }
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
+      if (audioUrlRef.current) {
+        URL.revokeObjectURL(audioUrlRef.current);
       }
     };
-  }, [audioUrl, stopAnalysis]);
+  }, [stopAnalysis]);
 
   return {
     recordingState,
