@@ -9,6 +9,7 @@ export interface StoredRecording {
   timestamp: number;
   duration: number;
   audioBlob: Blob;
+  mimeType?: string;
   samples: Array<{
     timestamp: number;
     amplitude: number;

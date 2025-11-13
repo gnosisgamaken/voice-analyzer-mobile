@@ -48,7 +48,7 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, seekTime, onSeekComplete }
     onSeekComplete?.();
   }, [seekTime, onSeekComplete]);
 
-  const togglePlayPause = () => {
+  const togglePlayPause = async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
@@ -58,8 +58,12 @@ export function AudioPlayer({ audioUrl, onTimeUpdate, seekTime, onSeekComplete }
       audio.pause();
       setIsPlaying(false);
     } else {
-      audio.play();
-      setIsPlaying(true);
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch (error) {
+        console.error('Failed to play audio:', error);
+      }
     }
   };
 

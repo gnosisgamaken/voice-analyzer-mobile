@@ -91,7 +91,23 @@ export function useAudioRecorder() {
 
       analyserRef.current = analyser;
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const options: MediaRecorderOptions = {};
+      const mimeTypes = [
+        'audio/webm',
+        'audio/webm;codecs=opus',
+        'audio/mp4',
+        'audio/mp4;codecs=mp4a.40.2',
+        'audio/aac',
+      ];
+      
+      for (const mimeType of mimeTypes) {
+        if (MediaRecorder.isTypeSupported(mimeType)) {
+          options.mimeType = mimeType;
+          break;
+        }
+      }
+
+      const mediaRecorder = new MediaRecorder(stream, options);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -102,7 +118,8 @@ export function useAudioRecorder() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         const url = URL.createObjectURL(audioBlob);
         audioUrlRef.current = url;
         setAudioUrl(url);
@@ -117,6 +134,7 @@ export function useAudioRecorder() {
           timestamp: startTimeRef.current,
           duration: Date.now() - startTimeRef.current - totalPausedTimeRef.current,
           audioBlob,
+          mimeType,
           samples: samplesRef.current.map(s => ({
             timestamp: s.timestamp,
             amplitude: s.amplitude,
@@ -181,7 +199,7 @@ export function useAudioRecorder() {
       mediaStreamRef.current.getTracks().forEach(track => track.stop());
     }
 
-    if (audioContextRef.current) {
+    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
       audioContextRef.current.close();
     }
 
@@ -206,7 +224,7 @@ export function useAudioRecorder() {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach(track => track.stop());
       }
-      if (audioContextRef.current) {
+      if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         audioContextRef.current.close();
       }
       if (audioUrlRef.current) {
