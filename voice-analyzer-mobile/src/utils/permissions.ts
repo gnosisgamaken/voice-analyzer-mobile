@@ -1,5 +1,5 @@
 import * as Location from 'expo-location';
-import { AudioModule } from 'expo-audio';
+import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 
 export interface PermissionStatus {
@@ -58,7 +58,7 @@ export async function ensureLocationPermission(): Promise<boolean> {
 
 export async function requestAudioPermission(): Promise<PermissionStatus> {
   try {
-    const { status, canAskAgain } = await AudioModule.requestRecordingPermissionsAsync();
+    const { status, canAskAgain } = await Audio.requestPermissionsAsync();
     
     return {
       granted: status === 'granted',
@@ -75,7 +75,7 @@ export async function requestAudioPermission(): Promise<PermissionStatus> {
 
 export async function checkAudioPermission(): Promise<PermissionStatus> {
   try {
-    const { status, canAskAgain } = await AudioModule.getRecordingPermissionsAsync();
+    const { status, canAskAgain } = await Audio.getPermissionsAsync();
     
     return {
       granted: status === 'granted',

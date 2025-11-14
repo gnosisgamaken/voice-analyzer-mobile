@@ -18,7 +18,7 @@ interface UseAudioPlayerReturn {
 
 let Audio: any;
 if (Platform.OS !== 'web') {
-  Audio = require('expo-audio');
+  Audio = require('expo-av');
 }
 
 export function useAudioPlayer(): UseAudioPlayerReturn {
