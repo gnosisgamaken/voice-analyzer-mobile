@@ -251,53 +251,30 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         console.log('[SAVE DEBUG] recorder.stop() completed');
         
         uri = recorder.uri;
-        console.log('[SAVE DEBUG] Recorder URI (may be zero-byte file):', uri);
+        console.log('[SAVE DEBUG] Recorder URI:', uri);
         
         if (uri) {
-          console.log('[SAVE DEBUG] Searching for actual recording file (SDK 54 bug workaround)...');
-          const { File, Directory, Paths } = await import('expo-file-system');
+          const { File } = await import('expo-file-system');
           
           try {
-            const audioDir = new Directory(Paths.cache, 'ExpoAudio');
-            const files = audioDir.list();
+            // First check if the file at recorder.uri actually exists and has content
+            const recorderFile = new File(uri);
+            const fileExists = recorderFile.exists;
+            const fileSize = recorderFile.size || 0;
             
-            console.log('[SAVE DEBUG] Found', files.length, 'files in ExpoAudio cache');
+            console.log('[SAVE DEBUG] File exists at recorder.uri:', fileExists);
+            console.log('[SAVE DEBUG] File size:', fileSize, 'bytes');
             
-            const validFiles = files.filter((file) => {
-              if (!(file instanceof File)) return false;
-              return file.exists && file.size && file.size > 0;
-            });
-            
-            console.log('[SAVE DEBUG] Found', validFiles.length, 'non-zero-byte files');
-            
-            if (validFiles.length > 0) {
-              const targetTime = recordingStartTimeRef.current;
-              let closestFile: any = null;
-              let minDiff = Infinity;
-              
-              for (const file of validFiles) {
-                const creationTime = (file as any).createdAt || targetTime;
-                const diff = Math.abs(creationTime - targetTime);
-                if (diff < minDiff) {
-                  closestFile = file;
-                  minDiff = diff;
-                }
-              }
-              
-              if (closestFile) {
-                uri = closestFile.uri;
-                console.log('[SAVE DEBUG] ✅ Found actual recording file:', uri);
-                console.log('[SAVE DEBUG] File size:', closestFile.size, 'bytes');
-              } else {
-                console.error('[SAVE DEBUG] ❌ No valid recording file found');
-                uri = null;
-              }
+            if (fileExists && fileSize > 0) {
+              console.log('[SAVE DEBUG] ✅ Recording file is valid, using recorder.uri');
+              // File is good, keep using original URI
             } else {
-              console.error('[SAVE DEBUG] ❌ No non-zero-byte files found - recording may be lost');
+              console.error('[SAVE DEBUG] ❌ File at recorder.uri is empty or missing');
+              console.log('[SAVE DEBUG] This is the known SDK 54 bug - file should exist but is zero-byte or missing');
               uri = null;
             }
-          } catch (searchError) {
-            console.error('[SAVE DEBUG] ❌ Error searching for recording file:', searchError);
+          } catch (checkError) {
+            console.error('[SAVE DEBUG] ❌ Error checking recording file:', checkError);
             uri = null;
           }
         }
