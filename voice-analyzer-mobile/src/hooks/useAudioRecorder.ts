@@ -34,6 +34,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const pauseStartTimeRef = useRef<number>(0);
   const locationRef = useRef<LocationData | null>(null);
   const allSamplesRef = useRef<VoiceSample[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
 
   const processAudioBuffer = useCallback(() => {
     try {
@@ -121,6 +122,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       console.log('[SAVE DEBUG] Location:', locationRef.current ? locationRef.current.formattedAddress : 'none');
       
       startTimeRef.current = Date.now();
+      recordingStartTimeRef.current = Date.now();
       totalPausedDurationRef.current = 0;
       pauseStartTimeRef.current = 0;
       allSamplesRef.current = [];
@@ -249,30 +251,53 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         console.log('[SAVE DEBUG] recorder.stop() completed');
         
         uri = recorder.uri;
-        console.log('[SAVE DEBUG] Recorder URI:', uri);
+        console.log('[SAVE DEBUG] Recorder URI (may be zero-byte file):', uri);
         
         if (uri) {
-          console.log('[SAVE DEBUG] Waiting for file to be written to disk...');
-          const { File } = await import('expo-file-system');
-          const file = new File(uri);
+          console.log('[SAVE DEBUG] Searching for actual recording file (SDK 54 bug workaround)...');
+          const { File, Directory, Paths } = await import('expo-file-system');
           
-          const maxAttempts = 20;
-          let attempts = 0;
-          let fileExists = false;
-          
-          while (attempts < maxAttempts && !fileExists) {
-            fileExists = file.exists;
-            if (!fileExists) {
-              await new Promise(resolve => setTimeout(resolve, 100));
-              attempts++;
+          try {
+            const audioDir = new Directory(Paths.cache, 'ExpoAudio');
+            const files = audioDir.list();
+            
+            console.log('[SAVE DEBUG] Found', files.length, 'files in ExpoAudio cache');
+            
+            const validFiles = files.filter((file) => {
+              if (!(file instanceof File)) return false;
+              return file.exists && file.size && file.size > 0;
+            });
+            
+            console.log('[SAVE DEBUG] Found', validFiles.length, 'non-zero-byte files');
+            
+            if (validFiles.length > 0) {
+              const targetTime = recordingStartTimeRef.current;
+              let closestFile: any = null;
+              let minDiff = Infinity;
+              
+              for (const file of validFiles) {
+                const creationTime = (file as any).createdAt || targetTime;
+                const diff = Math.abs(creationTime - targetTime);
+                if (diff < minDiff) {
+                  closestFile = file;
+                  minDiff = diff;
+                }
+              }
+              
+              if (closestFile) {
+                uri = closestFile.uri;
+                console.log('[SAVE DEBUG] ✅ Found actual recording file:', uri);
+                console.log('[SAVE DEBUG] File size:', closestFile.size, 'bytes');
+              } else {
+                console.error('[SAVE DEBUG] ❌ No valid recording file found');
+                uri = null;
+              }
+            } else {
+              console.error('[SAVE DEBUG] ❌ No non-zero-byte files found - recording may be lost');
+              uri = null;
             }
-          }
-          
-          if (fileExists) {
-            console.log('[SAVE DEBUG] ✅ File ready after', attempts * 100, 'ms');
-            console.log('[SAVE DEBUG] File size:', file.size, 'bytes');
-          } else {
-            console.error('[SAVE DEBUG] ❌ File still not ready after 2 seconds - recording may be lost');
+          } catch (searchError) {
+            console.error('[SAVE DEBUG] ❌ Error searching for recording file:', searchError);
             uri = null;
           }
         }
