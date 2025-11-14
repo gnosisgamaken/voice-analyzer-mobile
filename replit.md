@@ -10,7 +10,7 @@ A privacy-first native mobile application for iOS and Android that provides real
 
 ## Current Status
 
-### ✅ Completed (Sprint 1.1, 1.2, 1.3 & 1.4)
+### ✅ Completed (Sprint 1.1, 1.2, 1.3, 1.4 & 1.5)
 - **Project Setup**:
   - Expo TypeScript template initialized with React Native 0.81.5
   - Project structure: `src/` with screens, components, hooks, utils, types folders
@@ -57,11 +57,18 @@ A privacy-first native mobile application for iOS and Android that provides real
 - **Storage & Persistence (Sprint 1.4)**:
   - ✅ **Permissions**: `permissions.ts` utility for requesting/checking location permissions
   - ✅ **Location Service**: GPS coordinates + reverse geocoding for auto-naming recordings
-  - ✅ **Storage**: AsyncStorage for metadata, expo-file-system for audio files
+  - ✅ **Storage**: AsyncStorage for metadata, expo-file-system for audio files with correct async APIs
   - ✅ **RecordingsListScreen**: Display saved recordings with duration, location, date, metrics
   - ✅ **Delete Functionality**: Remove both metadata and audio files with confirmation
   - ✅ **Navigation**: React Navigation stack with type-safe routing
   - ✅ **Platform Safety**: Web-compatible code with Platform.OS guards
+
+- **Audio Playback (Sprint 1.5)**:
+  - ✅ **useAudioPlayer Hook**: expo-audio integration with memory leak prevention
+  - ✅ **PlaybackControls**: iOS-style play/pause/stop with optimistic seek slider
+  - ✅ **RecordingDetailsScreen**: Full recording info with playback integration
+  - ✅ **Memory Management**: isMounted guards, proper cleanup, interval timer management
+  - ✅ **Navigation**: Tap recording cards to view details and play audio
 
 - **Configuration**:
   - ✅ iOS/Android microphone permissions
@@ -69,7 +76,7 @@ A privacy-first native mobile application for iOS and Android that provides real
   - ✅ FFT-js type declarations
 
 ### 📋 Planned
-- Sprint 1.5-1.8: Audio playback, recording details view, export/share functionality
+- Sprint 1.6-1.8: Export/share functionality, enhanced list features, waveform thumbnails
 - Phase 2: Emotion detection with TensorFlow.js
 - Phase 3: Voice health metrics (jitter, shimmer, HNR)
 
@@ -281,25 +288,25 @@ npx expo start --android
 npx expo install <package-name>
 ```
 
-## Next Steps (Sprint 1.5 - Audio Playback)
+## Next Steps (Sprint 1.6 - Export & Share)
 
-1. **Audio Playback Utilities**:
-   - Create playback hook using expo-av
-   - Implement play/pause/seek controls
-   - Track playback progress
-   - Handle playback errors gracefully
+1. **Export Functionality**:
+   - Share recordings via native share sheet
+   - Export audio files to device storage
+   - Export metrics as CSV/JSON
+   - Copy to clipboard functionality
 
-2. **Recording Details Screen**:
-   - Display waveform visualization of saved recording
-   - Show full metrics breakdown
-   - Playback controls with seek bar
-   - Export/share options
-
-3. **Enhanced List Screen**:
+2. **Enhanced List Screen**:
    - Add waveform thumbnails for each recording
    - Implement search/filter functionality
    - Sort options (date, duration, location)
    - Batch delete functionality
+
+3. **Voice Health Metrics** (Future):
+   - Jitter calculation (pitch perturbation)
+   - Shimmer calculation (amplitude perturbation)
+   - HNR (Harmonic-to-Noise Ratio)
+   - Daily/weekly trend tracking
 
 ## References
 
@@ -313,5 +320,5 @@ npx expo install <package-name>
 
 ---
 
-**Last Updated**: November 14, 2025 (Sprint 1.4 completed)
-**Version**: 0.3.0 (Storage & Persistence MVP completed, playback next)
+**Last Updated**: November 14, 2025 (Sprint 1.5 completed)
+**Version**: 0.4.0 (Audio Playback MVP completed, export/share next)

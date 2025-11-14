@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
-import { Audio } from 'expo-av';
 
 export type PlaybackState = 'idle' | 'loading' | 'playing' | 'paused' | 'stopped' | 'error';
 
@@ -17,43 +16,20 @@ interface UseAudioPlayerReturn {
   unloadAudio: () => Promise<void>;
 }
 
+let Audio: any;
+if (Platform.OS !== 'web') {
+  Audio = require('expo-audio');
+}
+
 export function useAudioPlayer(): UseAudioPlayerReturn {
   const [playbackState, setPlaybackState] = useState<PlaybackState>('idle');
   const [position, setPosition] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   
-  const soundRef = useRef<Audio.Sound | null>(null);
+  const playerRef = useRef<any>(null);
   const updateIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
-  const startPositionUpdates = useCallback(() => {
-    if (updateIntervalRef.current) {
-      clearInterval(updateIntervalRef.current);
-    }
-
-    updateIntervalRef.current = setInterval(async () => {
-      if (soundRef.current) {
-        try {
-          const status = await soundRef.current.getStatusAsync();
-          if (status.isLoaded) {
-            setPosition(status.positionMillis);
-            setDuration(status.durationMillis || 0);
-            
-            if (status.didJustFinish) {
-              setPlaybackState('stopped');
-              setPosition(0);
-              if (updateIntervalRef.current) {
-                clearInterval(updateIntervalRef.current);
-                updateIntervalRef.current = null;
-              }
-            }
-          }
-        } catch (error) {
-          console.error('Error updating playback position:', error);
-        }
-      }
-    }, 100);
-  }, []);
+  const isMountedRef = useRef(true);
 
   const stopPositionUpdates = useCallback(() => {
     if (updateIntervalRef.current) {
@@ -62,133 +38,217 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
     }
   }, []);
 
+  const startPositionUpdates = useCallback(() => {
+    stopPositionUpdates();
+
+    updateIntervalRef.current = setInterval(async () => {
+      if (!isMountedRef.current || !playerRef.current) {
+        stopPositionUpdates();
+        return;
+      }
+
+      try {
+        if (Platform.OS === 'web') {
+          return;
+        }
+
+        const status = await playerRef.current.getStatusAsync();
+        
+        if (!isMountedRef.current) return;
+
+        if (status.isLoaded) {
+          setPosition(status.positionMillis);
+          setDuration(status.durationMillis || 0);
+          
+          if (status.didJustFinish) {
+            setPlaybackState('stopped');
+            setPosition(0);
+            stopPositionUpdates();
+          }
+        }
+      } catch (error) {
+        console.error('Error updating playback position:', error);
+        if (isMountedRef.current) {
+          stopPositionUpdates();
+        }
+      }
+    }, 100);
+  }, [stopPositionUpdates]);
+
   const loadAudio = useCallback(async (uri: string) => {
+    if (Platform.OS === 'web') {
+      setPlaybackState('error');
+      setIsLoaded(false);
+      return;
+    }
+
     try {
       setPlaybackState('loading');
       
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
+      stopPositionUpdates();
+      
+      if (playerRef.current) {
+        try {
+          await playerRef.current.unloadAsync();
+        } catch (e) {
+          console.warn('Error unloading previous player:', e);
+        }
+        playerRef.current = null;
       }
 
-      if (Platform.OS !== 'web') {
-        await Audio.setAudioModeAsync({
-          playsInSilentModeIOS: true,
-          staysActiveInBackground: false,
-        });
-      }
+      await Audio.setAudioModeAsync({
+        playsInSilentModeIOS: true,
+        staysActiveInBackground: false,
+      });
 
-      const { sound } = await Audio.Sound.createAsync(
+      const { player, status: initialStatus } = await Audio.AudioPlayer.createAsync(
         { uri },
         { shouldPlay: false }
       );
-
-      soundRef.current = sound;
       
-      const status = await sound.getStatusAsync();
-      if (status.isLoaded) {
-        setDuration(status.durationMillis || 0);
+      if (!isMountedRef.current) {
+        await player.unloadAsync();
+        return;
+      }
+
+      playerRef.current = player;
+      
+      if (!isMountedRef.current) {
+        await player.unloadAsync();
+        return;
+      }
+
+      if (initialStatus.isLoaded) {
+        setDuration(initialStatus.durationMillis || 0);
         setIsLoaded(true);
         setPlaybackState('stopped');
       }
     } catch (error) {
       console.error('Error loading audio:', error);
-      setPlaybackState('error');
-      setIsLoaded(false);
+      if (isMountedRef.current) {
+        setPlaybackState('error');
+        setIsLoaded(false);
+      }
     }
-  }, []);
+  }, [stopPositionUpdates]);
 
   const unloadAudio = useCallback(async () => {
     try {
       stopPositionUpdates();
       
-      if (soundRef.current) {
-        await soundRef.current.unloadAsync();
-        soundRef.current = null;
+      if (playerRef.current) {
+        try {
+          await playerRef.current.unloadAsync();
+        } catch (e) {
+          console.warn('Error unloading player:', e);
+        }
+        playerRef.current = null;
       }
       
-      setIsLoaded(false);
-      setPlaybackState('idle');
-      setPosition(0);
-      setDuration(0);
+      if (isMountedRef.current) {
+        setIsLoaded(false);
+        setPlaybackState('idle');
+        setPosition(0);
+        setDuration(0);
+      }
     } catch (error) {
       console.error('Error unloading audio:', error);
     }
   }, [stopPositionUpdates]);
 
   const play = useCallback(async () => {
-    if (!soundRef.current || !isLoaded) {
+    if (Platform.OS === 'web' || !playerRef.current || !isLoaded) {
       console.warn('Cannot play: audio not loaded');
       return;
     }
 
     try {
-      const status = await soundRef.current.getStatusAsync();
+      const status = await playerRef.current.getStatusAsync();
       
       if (status.isLoaded) {
         if (status.positionMillis >= (status.durationMillis || 0) - 100) {
-          await soundRef.current.setPositionAsync(0);
+          await playerRef.current.setPositionAsync(0);
         }
       }
 
-      await soundRef.current.playAsync();
-      setPlaybackState('playing');
-      startPositionUpdates();
+      await playerRef.current.playAsync();
+      
+      if (isMountedRef.current) {
+        setPlaybackState('playing');
+        startPositionUpdates();
+      }
     } catch (error) {
       console.error('Error playing audio:', error);
-      setPlaybackState('error');
+      if (isMountedRef.current) {
+        setPlaybackState('error');
+      }
     }
   }, [isLoaded, startPositionUpdates]);
 
   const pause = useCallback(async () => {
-    if (!soundRef.current || !isLoaded) {
+    if (Platform.OS === 'web' || !playerRef.current || !isLoaded) {
       return;
     }
 
     try {
-      await soundRef.current.pauseAsync();
-      setPlaybackState('paused');
+      await playerRef.current.pauseAsync();
       stopPositionUpdates();
+      
+      if (isMountedRef.current) {
+        setPlaybackState('paused');
+      }
     } catch (error) {
       console.error('Error pausing audio:', error);
     }
   }, [isLoaded, stopPositionUpdates]);
 
   const stop = useCallback(async () => {
-    if (!soundRef.current || !isLoaded) {
+    if (Platform.OS === 'web' || !playerRef.current || !isLoaded) {
       return;
     }
 
     try {
-      await soundRef.current.stopAsync();
-      await soundRef.current.setPositionAsync(0);
-      setPlaybackState('stopped');
-      setPosition(0);
+      await playerRef.current.stopAsync();
+      await playerRef.current.setPositionAsync(0);
       stopPositionUpdates();
+      
+      if (isMountedRef.current) {
+        setPlaybackState('stopped');
+        setPosition(0);
+      }
     } catch (error) {
       console.error('Error stopping audio:', error);
     }
   }, [isLoaded, stopPositionUpdates]);
 
   const seek = useCallback(async (positionMs: number) => {
-    if (!soundRef.current || !isLoaded) {
+    if (Platform.OS === 'web' || !playerRef.current || !isLoaded) {
       return;
     }
 
     try {
-      await soundRef.current.setPositionAsync(positionMs);
-      setPosition(positionMs);
+      await playerRef.current.setPositionAsync(positionMs);
+      if (isMountedRef.current) {
+        setPosition(positionMs);
+      }
     } catch (error) {
       console.error('Error seeking audio:', error);
     }
   }, [isLoaded]);
 
   useEffect(() => {
+    isMountedRef.current = true;
+    
     return () => {
-      if (soundRef.current) {
-        soundRef.current.unloadAsync();
-      }
+      isMountedRef.current = false;
       stopPositionUpdates();
+      
+      if (playerRef.current) {
+        playerRef.current.unloadAsync().catch((e: any) => {
+          console.warn('Error unloading on unmount:', e);
+        });
+        playerRef.current = null;
+      }
     };
   }, [stopPositionUpdates]);
 

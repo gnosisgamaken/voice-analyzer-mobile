@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { PlaybackState } from '../hooks/useAudioPlayer';
@@ -24,6 +24,16 @@ export default function PlaybackControls({
   onStop,
   onSeek,
 }: PlaybackControlsProps) {
+  const [isSeeking, setIsSeeking] = useState(false);
+  const [seekPosition, setSeekPosition] = useState(0);
+
+  const displayPosition = isSeeking ? seekPosition : position;
+
+  useEffect(() => {
+    if (!isSeeking) {
+      setSeekPosition(position);
+    }
+  }, [position, isSeeking]);
   const formatTime = (milliseconds: number): string => {
     const totalSeconds = Math.floor(milliseconds / 1000);
     const minutes = Math.floor(totalSeconds / 60);
@@ -45,7 +55,16 @@ export default function PlaybackControls({
     onStop();
   };
 
-  const handleSeek = (value: number) => {
+  const handleSeekStart = () => {
+    setIsSeeking(true);
+  };
+
+  const handleSeekChange = (value: number) => {
+    setSeekPosition(value);
+  };
+
+  const handleSeekComplete = (value: number) => {
+    setIsSeeking(false);
     onSeek(value);
   };
 
@@ -56,16 +75,18 @@ export default function PlaybackControls({
   return (
     <View style={styles.container}>
       <View style={styles.timeRow}>
-        <Text style={styles.timeText}>{formatTime(position)}</Text>
+        <Text style={styles.timeText}>{formatTime(displayPosition)}</Text>
         <Text style={styles.timeText}>{formatTime(duration)}</Text>
       </View>
 
       <Slider
         style={styles.slider}
-        value={position}
+        value={displayPosition}
         minimumValue={0}
         maximumValue={duration || 1}
-        onSlidingComplete={handleSeek}
+        onSlidingStart={handleSeekStart}
+        onValueChange={handleSeekChange}
+        onSlidingComplete={handleSeekComplete}
         minimumTrackTintColor="#007AFF"
         maximumTrackTintColor="#C7C7CC"
         thumbTintColor="#007AFF"

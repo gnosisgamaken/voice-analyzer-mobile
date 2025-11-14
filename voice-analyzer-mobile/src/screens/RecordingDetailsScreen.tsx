@@ -30,14 +30,17 @@ export default function RecordingDetailsScreen() {
   } = useAudioPlayer();
 
   useEffect(() => {
+    let isMounted = true;
+
     if (recording.audioUri) {
       loadAudio(recording.audioUri);
     }
 
     return () => {
+      isMounted = false;
       unloadAudio();
     };
-  }, [recording.audioUri]);
+  }, [recording.audioUri, loadAudio, unloadAudio]);
 
   const formatDate = (timestamp: number): string => {
     const date = new Date(timestamp);
