@@ -1,5 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { Platform } from 'react-native';
+import { Audio } from 'expo-av';
 
 export type PlaybackState = 'idle' | 'loading' | 'playing' | 'paused' | 'stopped' | 'error';
 
@@ -14,11 +15,6 @@ interface UseAudioPlayerReturn {
   seek: (position: number) => Promise<void>;
   loadAudio: (uri: string) => Promise<void>;
   unloadAudio: () => Promise<void>;
-}
-
-let Audio: any;
-if (Platform.OS !== 'web') {
-  Audio = require('expo-av');
 }
 
 export function useAudioPlayer(): UseAudioPlayerReturn {
@@ -101,25 +97,26 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
         staysActiveInBackground: false,
       });
 
-      const { player, status: initialStatus } = await Audio.AudioPlayer.createAsync(
+      const { sound } = await Audio.Sound.createAsync(
         { uri },
         { shouldPlay: false }
       );
       
       if (!isMountedRef.current) {
-        await player.unloadAsync();
+        await sound.unloadAsync();
         return;
       }
 
-      playerRef.current = player;
+      playerRef.current = sound;
       
       if (!isMountedRef.current) {
-        await player.unloadAsync();
+        await sound.unloadAsync();
         return;
       }
 
-      if (initialStatus.isLoaded) {
-        setDuration(initialStatus.durationMillis || 0);
+      const status = await sound.getStatusAsync();
+      if (status.isLoaded) {
+        setDuration(status.durationMillis || 0);
         setIsLoaded(true);
         setPlaybackState('stopped');
       }
