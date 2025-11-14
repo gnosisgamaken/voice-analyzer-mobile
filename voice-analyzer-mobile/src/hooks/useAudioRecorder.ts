@@ -77,8 +77,11 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const startRecording = useCallback(async () => {
     try {
+      console.log('[SAVE DEBUG] 🎙️ Start recording called');
+      
       await initializeStorage();
       locationRef.current = await getCurrentLocation();
+      console.log('[SAVE DEBUG] Location:', locationRef.current ? locationRef.current.formattedAddress : 'none');
       
       startTimeRef.current = Date.now();
       totalPausedDurationRef.current = 0;
@@ -86,18 +89,25 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       allSamplesRef.current = [];
       analyzerRef.current.reset();
       
+      console.log('[SAVE DEBUG] Recorder available:', !!recorder);
+      console.log('[SAVE DEBUG] Recorder.record available:', !!recorder?.record);
+      
       try {
         if (recorder?.record) {
+          console.log('[SAVE DEBUG] Calling recorder.record()...');
           await recorder.record();
+          console.log('[SAVE DEBUG] ✅ Recording started successfully');
+        } else {
+          console.log('[SAVE DEBUG] ⚠️ Recorder.record() not available');
         }
       } catch (recorderError) {
-        console.warn('Recorder not available (expected in web preview):', recorderError);
+        console.warn('[SAVE DEBUG] ❌ Recorder error (expected in web preview):', recorderError);
       }
       
       setRecordingState('recording');
       intervalRef.current = setInterval(processAudioBuffer, 50);
     } catch (error) {
-      console.error('Failed to start recording:', error);
+      console.error('[SAVE DEBUG] ❌ Failed to start recording:', error);
       setRecordingState('idle');
     }
   }, [processAudioBuffer, recorder]);
@@ -176,6 +186,11 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
+      console.log('[SAVE DEBUG] 🛑 Stop recording called');
+      console.log('[SAVE DEBUG] Current duration:', duration);
+      console.log('[SAVE DEBUG] Recorder exists:', !!recorder);
+      console.log('[SAVE DEBUG] Recorder.stop exists:', !!recorder?.stop);
+      
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
@@ -184,11 +199,20 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       let uri: string | null | undefined;
       
       if (recorder?.stop) {
+        console.log('[SAVE DEBUG] Calling recorder.stop()...');
         await recorder.stop();
+        console.log('[SAVE DEBUG] recorder.stop() completed');
+        
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
         uri = recorder.uri;
         console.log('[SAVE DEBUG] Recorder URI after stop:', uri);
+        console.log('[SAVE DEBUG] Recorder URI type:', typeof uri);
+        console.log('[SAVE DEBUG] Recorder object keys:', recorder ? Object.keys(recorder) : 'no recorder');
         console.log('[SAVE DEBUG] Duration:', duration);
         console.log('[SAVE DEBUG] Will save:', uri && duration > 0);
+      } else {
+        console.log('[SAVE DEBUG] ❌ Recorder or recorder.stop() not available');
       }
 
       if (uri && duration > 0) {
