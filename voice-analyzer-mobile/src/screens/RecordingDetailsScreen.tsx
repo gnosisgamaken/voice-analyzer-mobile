@@ -1,20 +1,22 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import PlaybackControls from '../components/PlaybackControls';
 import VoiceMetrics from '../components/VoiceMetrics';
-import type { RootStackParamList } from '../../App';
+import type { NavigationProp } from '../navigation/SimpleNavigator';
+import type { StoredRecording } from '../types';
 
-type RecordingDetailsRouteProp = RouteProp<RootStackParamList, 'RecordingDetails'>;
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'RecordingDetails'>;
+interface RecordingDetailsScreenProps {
+  navigation: NavigationProp;
+  route: {
+    params: {
+      recording: StoredRecording;
+    };
+  };
+}
 
-export default function RecordingDetailsScreen() {
-  const navigation = useNavigation<NavigationProp>();
-  const route = useRoute<RecordingDetailsRouteProp>();
+export default function RecordingDetailsScreen({ navigation, route }: RecordingDetailsScreenProps) {
   const { recording } = route.params;
 
   const {
@@ -61,7 +63,7 @@ export default function RecordingDetailsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
       <View style={styles.topBar}>

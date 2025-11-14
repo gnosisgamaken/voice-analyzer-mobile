@@ -1,17 +1,15 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { StoredRecording } from '../types';
 import { getAllRecordings, deleteRecording } from '../utils/storage';
-import type { RootStackParamList } from '../../App';
+import type { NavigationProp } from '../navigation/SimpleNavigator';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'RecordingsList'>;
+interface RecordingsListScreenProps {
+  navigation: NavigationProp;
+}
 
-export default function RecordingsListScreen() {
-  const navigation = useNavigation<NavigationProp>();
+export default function RecordingsListScreen({ navigation }: RecordingsListScreenProps) {
   const [recordings, setRecordings] = useState<StoredRecording[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,13 +26,7 @@ export default function RecordingsListScreen() {
 
   useEffect(() => {
     loadRecordings();
-    
-    const unsubscribe = navigation.addListener('focus', () => {
-      loadRecordings();
-    });
-
-    return unsubscribe;
-  }, [navigation, loadRecordings]);
+  }, [loadRecordings]);
 
   const handleDelete = useCallback((recording: StoredRecording) => {
     Alert.alert(
@@ -130,7 +122,7 @@ export default function RecordingsListScreen() {
   );
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
       <View style={styles.topBar}>

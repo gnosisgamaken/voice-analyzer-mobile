@@ -1,6 +1,5 @@
 import React, { useMemo } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
-import { Canvas, RoundedRect } from '@shopify/react-native-skia';
 import { pitchToColor } from '../utils/pitchToColor';
 
 interface WaveformViewProps {
@@ -27,34 +26,34 @@ export default function WaveformView({ samples, height = 200 }: WaveformViewProp
       
       const normalizedAmplitude = Math.min(Math.max(sample.amplitude, 0), 1);
       const barHeight = normalizedAmplitude * height * 0.8;
-      const x = index * (barWidth + BAR_GAP);
-      const y = (height - barHeight) / 2;
 
       return {
-        x,
-        y,
-        width: barWidth,
+        id: index,
         height: Math.max(barHeight, 4),
         color,
       };
     });
-  }, [displaySamples, barWidth, height]);
+  }, [displaySamples, height]);
 
   return (
     <View style={[styles.container, { height }]}>
-      <Canvas style={{ width, height }}>
-        {bars.map((bar, index) => (
-          <RoundedRect
-            key={index}
-            x={bar.x + 16}
-            y={bar.y}
-            width={bar.width}
-            height={bar.height}
-            r={barWidth / 2}
-            color={bar.color}
+      <View style={styles.barsContainer}>
+        {bars.map((bar) => (
+          <View
+            key={bar.id}
+            style={[
+              styles.bar,
+              {
+                width: barWidth,
+                height: bar.height,
+                backgroundColor: bar.color,
+                borderRadius: barWidth / 2,
+                marginHorizontal: BAR_GAP / 2,
+              },
+            ]}
           />
         ))}
-      </Canvas>
+      </View>
     </View>
   );
 }
@@ -65,5 +64,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
     overflow: 'hidden',
+  },
+  barsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    paddingHorizontal: 16,
+  },
+  bar: {
+    alignSelf: 'center',
   },
 });

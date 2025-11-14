@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import WaveformView from '../components/WaveformView';
 import RecordingControls from '../components/RecordingControls';
 import VoiceMetrics from '../components/VoiceMetrics';
 import { VoiceSample } from '../types';
-import type { RootStackParamList } from '../../App';
+import type { NavigationProp } from '../navigation/SimpleNavigator';
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainRecording'>;
+interface MainRecordingScreenProps {
+  navigation: NavigationProp;
+}
 
-export default function MainRecordingScreen() {
-  const navigation = useNavigation<NavigationProp>();
+export default function MainRecordingScreen({ navigation }: MainRecordingScreenProps) {
   const {
     recordingState,
     currentSample,
