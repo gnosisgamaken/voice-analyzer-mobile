@@ -10,11 +10,12 @@ A privacy-first native mobile application for iOS and Android that provides real
 
 ## Current Status
 
-### ✅ Completed (Sprint 1.1, 1.2, 1.3, 1.4 & 1.5)
+### ✅ Completed (Sprint 1.1, 1.2, 1.3, 1.4, 1.5 & 1.6)
 - **Project Setup**:
   - Expo TypeScript template initialized with React Native 0.81.5
   - Project structure: `src/` with screens, components, hooks, utils, types folders
   - Workflow running successfully on port 5000 (web preview)
+  - **100% Expo Go compatible** - no custom native modules required
   
 - **Dependencies Installed**:
   - `expo-audio` (SDK 54's new audio package)
@@ -56,12 +57,12 @@ A privacy-first native mobile application for iOS and Android that provides real
   - ✅ **MainRecordingScreen**: Complete integration with SafeAreaView, ScrollView, memory-efficient sample buffering (100-sample ring buffer)
 
 - **Storage & Persistence (Sprint 1.4)**:
-  - ✅ **Permissions**: `permissions.ts` utility for requesting/checking location permissions
+  - ✅ **Permissions**: `permissions.ts` utility for audio + location permissions with ensureAudioPermission()
   - ✅ **Location Service**: GPS coordinates + reverse geocoding for auto-naming recordings
-  - ✅ **Storage**: AsyncStorage for metadata, expo-file-system for audio files with correct async APIs
+  - ✅ **Storage**: Migrated to Expo SDK 54 new FileSystem API (File/Directory classes)
   - ✅ **RecordingsListScreen**: Display saved recordings with duration, location, date, metrics
   - ✅ **Delete Functionality**: Remove both metadata and audio files with confirmation
-  - ✅ **Navigation**: React Navigation stack with type-safe routing
+  - ✅ **Navigation**: Custom SimpleNavigator (pure React state, Expo Go compatible)
   - ✅ **Platform Safety**: Web-compatible code with Platform.OS guards
 
 - **Audio Playback (Sprint 1.5)**:
@@ -71,15 +72,23 @@ A privacy-first native mobile application for iOS and Android that provides real
   - ✅ **Memory Management**: isMounted guards, proper cleanup, interval timer management
   - ✅ **Navigation**: Tap recording cards to view details and play audio
 
+- **Bug Fixes & Polish (Sprint 1.6)**:
+  - ✅ **Audio Permissions**: Fixed "Recording permission has not been granted" error
+  - ✅ **FileSystem Migration**: Migrated to SDK 54's new File/Directory API (deprecated legacy API removed)
+  - ✅ **Permission Flow**: Added ensureAudioPermission() with Alert dialog for denied access
+  - ✅ **Storage Logging**: Enhanced debug logging for save/load operations
+
 - **Configuration**:
-  - ✅ iOS/Android microphone permissions
+  - ✅ iOS/Android microphone permissions with runtime request flow
   - ✅ Location permissions for auto-naming
   - ✅ FFT-js type declarations
-  - ✅ Babel config: `babel-preset-expo` + `react-native-reanimated/plugin` for worklet compilation
-  - ✅ **CRITICAL Expo Go Fix**: Downgraded to Reanimated v3.15.0 (matches Expo Go's bundled version)
+  - ✅ Babel config: `babel-preset-expo` (removed Reanimated for Expo Go compatibility)
+  - ✅ **Expo Go Compatible**: Pure JavaScript navigation and UI (no native dependencies)
 
-### 📋 Planned
-- Sprint 1.6-1.8: Export/share functionality, enhanced list features, waveform thumbnails
+### 📋 Next Steps
+- Sprint 1.7: Export/share functionality (native share sheet)
+- Sprint 1.8: Enhanced list features (search, filter, sort)
+- Sprint 1.9: Waveform thumbnails for recordings list
 - Phase 2: Emotion detection with TensorFlow.js
 - Phase 3: Voice health metrics (jitter, shimmer, HNR)
 
@@ -110,10 +119,7 @@ A privacy-first native mobile application for iOS and Android that provides real
 - **Apple Design System**: SF Pro fonts, iOS color palette, 8pt grid
 
 ### Navigation
-- **@react-navigation/stack**: JavaScript stack navigator (Expo Go compatible)
-- **react-native-gesture-handler**: Required for stack navigator
-- **react-native-screens**: Native screen components
-- **react-native-safe-area-context**: Safe area insets
+- **SimpleNavigator**: Custom pure-React navigation (Expo Go compatible, no native dependencies)
 
 ### Storage
 - **@react-native-async-storage/async-storage**: Metadata storage
@@ -324,5 +330,5 @@ npx expo install <package-name>
 
 ---
 
-**Last Updated**: November 14, 2025 (Sprint 1.5 completed)
-**Version**: 0.4.0 (Audio Playback MVP completed, export/share next)
+**Last Updated**: November 14, 2025 (Sprint 1.6 completed - Permissions & FileSystem fixes)
+**Version**: 0.5.0 (Ready for real device testing - audio recording with proper permissions)
