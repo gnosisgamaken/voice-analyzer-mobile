@@ -79,8 +79,16 @@ export default function RecordingsListScreen() {
     });
   };
 
+  const handleRecordingPress = useCallback((recording: StoredRecording) => {
+    navigation.navigate('RecordingDetails', { recording });
+  }, [navigation]);
+
   const renderRecording = ({ item }: { item: StoredRecording }) => (
-    <View style={styles.recordingCard}>
+    <TouchableOpacity 
+      style={styles.recordingCard}
+      onPress={() => handleRecordingPress(item)}
+      activeOpacity={0.7}
+    >
       <View style={styles.recordingInfo}>
         <Text style={styles.recordingName} numberOfLines={1}>
           {item.name}
@@ -101,11 +109,14 @@ export default function RecordingsListScreen() {
       </View>
       <TouchableOpacity
         style={styles.deleteButton}
-        onPress={() => handleDelete(item)}
+        onPress={(e) => {
+          e.stopPropagation();
+          handleDelete(item);
+        }}
       >
         <Text style={styles.deleteButtonText}>Delete</Text>
       </TouchableOpacity>
-    </View>
+    </TouchableOpacity>
   );
 
   const renderEmpty = () => (
