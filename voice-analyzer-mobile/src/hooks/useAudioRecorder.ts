@@ -28,7 +28,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const analyzerRef = useRef<VoiceAnalyzer>(new VoiceAnalyzer(44100, 2048));
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
-  const pausedTimeRef = useRef<number>(0);
+  const totalPausedDurationRef = useRef<number>(0);
+  const pauseStartTimeRef = useRef<number>(0);
   const locationRef = useRef<LocationData | null>(null);
   const allSamplesRef = useRef<VoiceSample[]>([]);
 
@@ -67,7 +68,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       allSamplesRef.current.push(sample);
 
       const currentTime = Date.now();
-      const elapsed = (currentTime - startTimeRef.current - pausedTimeRef.current) / 1000;
+      const elapsed = (currentTime - startTimeRef.current - totalPausedDurationRef.current) / 1000;
       setDuration(elapsed);
     } catch (error) {
       console.error('Error processing audio:', error);
@@ -80,7 +81,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       locationRef.current = await getCurrentLocation();
       
       startTimeRef.current = Date.now();
-      pausedTimeRef.current = 0;
+      totalPausedDurationRef.current = 0;
+      pauseStartTimeRef.current = 0;
       allSamplesRef.current = [];
       analyzerRef.current.reset();
       
@@ -116,7 +118,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       intervalRef.current = null;
     }
 
-    pausedTimeRef.current = Date.now() - startTimeRef.current;
+    pauseStartTimeRef.current = Date.now();
   }, [recorder]);
 
   const resumeRecording = useCallback(async () => {
@@ -130,8 +132,11 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     
     setRecordingState('recording');
     
-    const pauseDuration = Date.now() - (startTimeRef.current + pausedTimeRef.current);
-    pausedTimeRef.current += pauseDuration;
+    if (pauseStartTimeRef.current > 0) {
+      const pauseDuration = Date.now() - pauseStartTimeRef.current;
+      totalPausedDurationRef.current += pauseDuration;
+      pauseStartTimeRef.current = 0;
+    }
 
     intervalRef.current = setInterval(processAudioBuffer, 50);
   }, [processAudioBuffer, recorder]);
@@ -176,18 +181,23 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         intervalRef.current = null;
       }
 
+      let uri: string | null | undefined;
+      
       if (recorder?.stop) {
         await recorder.stop();
+        uri = recorder.uri;
+        console.log('[SAVE DEBUG] Recorder URI after stop:', uri);
+        console.log('[SAVE DEBUG] Duration:', duration);
+        console.log('[SAVE DEBUG] Will save:', uri && duration > 0);
       }
-      const uri = recorder?.uri;
-      
-      setRecordingState('stopped');
-      setCurrentSample(null);
 
       if (uri && duration > 0) {
         try {
+          console.log('[SAVE DEBUG] Starting save process...');
           const recordingId = `recording_${startTimeRef.current}`;
           const savedUri = await saveAudioFile(uri, recordingId);
+          console.log('[SAVE DEBUG] Audio file saved to:', savedUri);
+          
           const averageMetrics = calculateAverageMetrics();
           const recordingName = generateRecordingName(locationRef.current, startTimeRef.current);
 
@@ -206,22 +216,25 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             averageMetrics,
           });
 
-          console.log('Recording saved:', recordingName);
+          console.log('[SAVE DEBUG] ✅ Recording saved successfully:', recordingName);
         } catch (saveError) {
-          console.error('Failed to save recording:', saveError);
+          console.error('[SAVE DEBUG] ❌ Failed to save recording:', saveError);
         }
+      } else {
+        console.log('[SAVE DEBUG] ❌ Not saving - URI:', uri, 'Duration:', duration);
       }
 
+      resetRecording();
       return uri || null;
     } catch (error) {
+      console.error('[SAVE DEBUG] ❌ Error in stopRecording:', error);
+      
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
 
-      setRecordingState('stopped');
-      setCurrentSample(null);
-
+      resetRecording();
       return null;
     }
   }, [recorder, duration, calculateAverageMetrics]);
@@ -236,7 +249,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     setCurrentSample(null);
     setDuration(0);
     startTimeRef.current = 0;
-    pausedTimeRef.current = 0;
+    totalPausedDurationRef.current = 0;
+    pauseStartTimeRef.current = 0;
     locationRef.current = null;
     allSamplesRef.current = [];
     analyzerRef.current.reset();
