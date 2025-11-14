@@ -1,17 +1,77 @@
-import React from 'react';
-import { View, Text, StyleSheet, StatusBar } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import WaveformView from '../components/WaveformView';
+import RecordingControls from '../components/RecordingControls';
+import VoiceMetrics from '../components/VoiceMetrics';
+import { VoiceSample } from '../types';
 
 export default function MainRecordingScreen() {
+  const {
+    recordingState,
+    currentSample,
+    duration,
+    startRecording,
+    pauseRecording,
+    resumeRecording,
+    stopRecording,
+  } = useAudioRecorder();
+
+  const [samples, setSamples] = useState<VoiceSample[]>([]);
+
+  useEffect(() => {
+    if (currentSample) {
+      setSamples(prev => {
+        const updated = [...prev, currentSample];
+        return updated.length > 100 ? updated.slice(-100) : updated;
+      });
+    }
+  }, [currentSample]);
+
+  useEffect(() => {
+    if (recordingState === 'idle' || recordingState === 'stopped') {
+      setSamples([]);
+    }
+  }, [recordingState]);
+
+  const waveformSamples = samples.map(s => ({
+    pitchHz: s.pitchHz,
+    amplitude: s.amplitude,
+  }));
+
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <Text style={styles.title}>Voice Analyzer</Text>
-      <Text style={styles.subtitle}>Native Mobile App</Text>
-      <View style={styles.placeholder}>
-        <Text style={styles.placeholderText}>🎤</Text>
-        <Text style={styles.infoText}>Ready to build!</Text>
-      </View>
-    </View>
+    <SafeAreaView style={styles.container}>
+      <StatusBar style="dark" />
+      
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Text style={styles.title}>Voice Analyzer</Text>
+          <Text style={styles.subtitle}>Real-time voice analysis</Text>
+        </View>
+
+        <View style={styles.waveformContainer}>
+          <WaveformView samples={waveformSamples} height={180} />
+        </View>
+
+        <RecordingControls
+          recordingState={recordingState}
+          duration={duration}
+          onStart={startRecording}
+          onPause={pauseRecording}
+          onResume={resumeRecording}
+          onStop={stopRecording}
+        />
+
+        <View style={styles.metricsSection}>
+          <Text style={styles.sectionTitle}>Voice Metrics</Text>
+          <VoiceMetrics metrics={currentSample?.voiceMetrics || null} />
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
@@ -19,41 +79,38 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 24,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
   },
   title: {
     fontSize: 34,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#000000',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   subtitle: {
-    fontSize: 22,
-    color: '#8E8E93',
-    marginBottom: 40,
-  },
-  placeholder: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  placeholderText: {
-    fontSize: 60,
-    marginBottom: 10,
-  },
-  infoText: {
     fontSize: 16,
-    color: '#007AFF',
+    color: '#8E8E93',
+  },
+  waveformContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 24,
+  },
+  metricsSection: {
+    marginTop: 24,
+  },
+  sectionTitle: {
+    fontSize: 22,
     fontWeight: '600',
+    color: '#000000',
+    paddingHorizontal: 16,
+    marginBottom: 16,
   },
 });
