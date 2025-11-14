@@ -28,10 +28,14 @@ export type PlaybackState = 'idle' | 'playing' | 'paused';
 export interface StoredRecording {
   id: string;
   name: string;
-  locationName: string;
   timestamp: number;
   duration: number;
   audioUri: string;
-  samples: VoiceSample[];
-  mimeType: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    city?: string;
+    formattedAddress?: string;
+  };
+  averageMetrics: VoiceMetrics;
 }

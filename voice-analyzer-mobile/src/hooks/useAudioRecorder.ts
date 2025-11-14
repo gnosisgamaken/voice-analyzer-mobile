@@ -2,7 +2,9 @@ import { useState, useRef, useCallback } from 'react';
 import { useAudioRecorder as useExpoAudioRecorder, RecordingPresets, RecordingOptions } from 'expo-audio';
 import { VoiceAnalyzer, AudioFeatures, calculateVoiceMetrics } from '../utils/enhancedAudioAnalysis';
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
-import { VoiceSample, RecordingState } from '../types';
+import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
+import { getCurrentLocation, generateRecordingName, LocationData } from '../utils/locationService';
+import { saveRecordingMetadata, saveAudioFile, initializeStorage } from '../utils/storage';
 
 const RECORDING_OPTIONS: RecordingOptions = RecordingPresets.HIGH_QUALITY;
 
@@ -27,6 +29,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
   const pausedTimeRef = useRef<number>(0);
+  const locationRef = useRef<LocationData | null>(null);
+  const allSamplesRef = useRef<VoiceSample[]>([]);
 
   const processAudioBuffer = useCallback(() => {
     try {
@@ -60,6 +64,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       };
 
       setCurrentSample(sample);
+      allSamplesRef.current.push(sample);
 
       const currentTime = Date.now();
       const elapsed = (currentTime - startTimeRef.current - pausedTimeRef.current) / 1000;
@@ -71,22 +76,27 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const startRecording = useCallback(async () => {
     try {
-      if (recorder?.record) {
-        await recorder.record();
-      }
+      await initializeStorage();
+      locationRef.current = await getCurrentLocation();
+      
       startTimeRef.current = Date.now();
       pausedTimeRef.current = 0;
-      setRecordingState('recording');
+      allSamplesRef.current = [];
       analyzerRef.current.reset();
-
+      
+      try {
+        if (recorder?.record) {
+          await recorder.record();
+        }
+      } catch (recorderError) {
+        console.warn('Recorder not available (expected in web preview):', recorderError);
+      }
+      
+      setRecordingState('recording');
       intervalRef.current = setInterval(processAudioBuffer, 50);
     } catch (error) {
-      startTimeRef.current = Date.now();
-      pausedTimeRef.current = 0;
-      setRecordingState('recording');
-      analyzerRef.current.reset();
-
-      intervalRef.current = setInterval(processAudioBuffer, 50);
+      console.error('Failed to start recording:', error);
+      setRecordingState('idle');
     }
   }, [processAudioBuffer, recorder]);
 
@@ -95,24 +105,18 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       if (recorder?.pause) {
         await recorder.pause();
       }
-      setRecordingState('paused');
-      
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-
-      pausedTimeRef.current = Date.now() - startTimeRef.current;
     } catch (error) {
-      setRecordingState('paused');
-      
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-
-      pausedTimeRef.current = Date.now() - startTimeRef.current;
+      console.warn('Recorder pause failed (expected in web preview):', error);
     }
+    
+    setRecordingState('paused');
+    
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+
+    pausedTimeRef.current = Date.now() - startTimeRef.current;
   }, [recorder]);
 
   const resumeRecording = useCallback(async () => {
@@ -120,21 +124,50 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       if (recorder?.record) {
         await recorder.record();
       }
-      setRecordingState('recording');
-      
-      const pauseDuration = Date.now() - (startTimeRef.current + pausedTimeRef.current);
-      pausedTimeRef.current += pauseDuration;
-
-      intervalRef.current = setInterval(processAudioBuffer, 50);
     } catch (error) {
-      setRecordingState('recording');
-      
-      const pauseDuration = Date.now() - (startTimeRef.current + pausedTimeRef.current);
-      pausedTimeRef.current += pauseDuration;
-
-      intervalRef.current = setInterval(processAudioBuffer, 50);
+      console.warn('Recorder resume failed (expected in web preview):', error);
     }
+    
+    setRecordingState('recording');
+    
+    const pauseDuration = Date.now() - (startTimeRef.current + pausedTimeRef.current);
+    pausedTimeRef.current += pauseDuration;
+
+    intervalRef.current = setInterval(processAudioBuffer, 50);
   }, [processAudioBuffer, recorder]);
+
+  const calculateAverageMetrics = useCallback((): VoiceMetrics => {
+    const samples = allSamplesRef.current;
+    
+    if (samples.length === 0) {
+      return {
+        brightness: 0.5,
+        clarity: 0.5,
+        richness: 0.5,
+        energy: 0.5,
+        pitchStability: 0.5,
+      };
+    }
+
+    const sum = samples.reduce(
+      (acc, sample) => ({
+        brightness: acc.brightness + (sample.voiceMetrics?.brightness || 0),
+        clarity: acc.clarity + (sample.voiceMetrics?.clarity || 0),
+        richness: acc.richness + (sample.voiceMetrics?.richness || 0),
+        energy: acc.energy + (sample.voiceMetrics?.energy || 0),
+        pitchStability: acc.pitchStability + (sample.voiceMetrics?.pitchStability || 0),
+      }),
+      { brightness: 0, clarity: 0, richness: 0, energy: 0, pitchStability: 0 }
+    );
+
+    return {
+      brightness: sum.brightness / samples.length,
+      clarity: sum.clarity / samples.length,
+      richness: sum.richness / samples.length,
+      energy: sum.energy / samples.length,
+      pitchStability: sum.pitchStability / samples.length,
+    };
+  }, []);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
@@ -151,6 +184,34 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       setRecordingState('stopped');
       setCurrentSample(null);
 
+      if (uri && duration > 0) {
+        try {
+          const recordingId = `recording_${startTimeRef.current}`;
+          const savedUri = await saveAudioFile(uri, recordingId);
+          const averageMetrics = calculateAverageMetrics();
+          const recordingName = generateRecordingName(locationRef.current, startTimeRef.current);
+
+          await saveRecordingMetadata({
+            id: recordingId,
+            name: recordingName,
+            timestamp: startTimeRef.current,
+            duration,
+            audioUri: savedUri,
+            location: locationRef.current ? {
+              latitude: locationRef.current.latitude,
+              longitude: locationRef.current.longitude,
+              city: locationRef.current.city,
+              formattedAddress: locationRef.current.formattedAddress,
+            } : undefined,
+            averageMetrics,
+          });
+
+          console.log('Recording saved:', recordingName);
+        } catch (saveError) {
+          console.error('Failed to save recording:', saveError);
+        }
+      }
+
       return uri || null;
     } catch (error) {
       if (intervalRef.current) {
@@ -163,7 +224,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       return null;
     }
-  }, [recorder]);
+  }, [recorder, duration, calculateAverageMetrics]);
 
   const resetRecording = useCallback(() => {
     if (intervalRef.current) {
@@ -176,6 +237,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     setDuration(0);
     startTimeRef.current = 0;
     pausedTimeRef.current = 0;
+    locationRef.current = null;
+    allSamplesRef.current = [];
     analyzerRef.current.reset();
   }, []);
 

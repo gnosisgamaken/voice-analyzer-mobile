@@ -1,13 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import WaveformView from '../components/WaveformView';
 import RecordingControls from '../components/RecordingControls';
 import VoiceMetrics from '../components/VoiceMetrics';
 import { VoiceSample } from '../types';
+import type { RootStackParamList } from '../../App';
+
+type NavigationProp = NativeStackNavigationProp<RootStackParamList, 'MainRecording'>;
 
 export default function MainRecordingScreen() {
+  const navigation = useNavigation<NavigationProp>();
   const {
     recordingState,
     currentSample,
@@ -44,6 +50,15 @@ export default function MainRecordingScreen() {
     <SafeAreaView style={styles.container}>
       <StatusBar style="dark" />
       
+      <View style={styles.topBar}>
+        <TouchableOpacity
+          style={styles.recordingsButton}
+          onPress={() => navigation.navigate('RecordingsList')}
+        >
+          <Text style={styles.recordingsButtonText}>📁 Recordings</Text>
+        </TouchableOpacity>
+      </View>
+
       <ScrollView 
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -79,6 +94,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#F2F2F7',
+  },
+  topBar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  },
+  recordingsButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  recordingsButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#FFFFFF',
   },
   scrollContent: {
     paddingBottom: 32,
