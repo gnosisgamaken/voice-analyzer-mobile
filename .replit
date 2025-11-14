@@ -23,7 +23,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd voice-analyzer-mobile && npx expo start --web --port 5000 --tunnel"
+args = "cd voice-analyzer-mobile && npx expo start --clear --web --port 5000 --tunnel"
 waitForPort = 5000
 
 [[ports]]
@@ -31,7 +31,7 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 46821
+localPort = 33215
 externalPort = 3000
 
 [nix]
