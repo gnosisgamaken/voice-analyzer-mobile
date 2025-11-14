@@ -1,6 +1,7 @@
+import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createStackNavigator } from '@react-navigation/stack';
 import MainRecordingScreen from './src/screens/MainRecordingScreen';
 import RecordingsListScreen from './src/screens/RecordingsListScreen';
 import RecordingDetailsScreen from './src/screens/RecordingDetailsScreen';
@@ -12,7 +13,7 @@ export type RootStackParamList = {
   RecordingDetails: { recording: StoredRecording };
 };
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+const Stack = createStackNavigator<RootStackParamList>();
 
 export default function App() {
   return (
