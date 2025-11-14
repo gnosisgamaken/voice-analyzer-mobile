@@ -22,8 +22,8 @@ A privacy-first native mobile application for iOS and Android that provides real
   - `@shopify/react-native-skia` 2.2.12 (GPU-accelerated graphics)
   - `expo-haptics`, `expo-location`, `expo-file-system`
   - `@react-native-async-storage/async-storage`
-  - React Navigation packages (native stack, screens, safe area)
-  - `react-native-reanimated` 4.1.1 + `react-native-worklets` 0.5.1 (required peer dependency for Expo Go)
+  - React Navigation packages (stack navigator, screens, safe area, gesture-handler)
+  - `react-native-reanimated` ~3.15.0 (matches Expo Go SDK 54's bundled version)
   - `react-dom`, `react-native-web` (for web preview)
 
 - **Audio Analysis Engine**:
@@ -75,8 +75,8 @@ A privacy-first native mobile application for iOS and Android that provides real
   - ✅ iOS/Android microphone permissions
   - ✅ Location permissions for auto-naming
   - ✅ FFT-js type declarations
-  - ✅ Babel config: `babel-preset-expo` auto-configures reanimated (no manual plugin needed)
-  - ✅ Critical fix: Added `react-native-worklets@0.5.1` (peer dependency required by Reanimated 4.1 for Expo Go)
+  - ✅ Babel config: `babel-preset-expo` + `react-native-reanimated/plugin` for worklet compilation
+  - ✅ **CRITICAL Expo Go Fix**: Downgraded to Reanimated v3.15.0 (matches Expo Go's bundled version)
 
 ### 📋 Planned
 - Sprint 1.6-1.8: Export/share functionality, enhanced list features, waveform thumbnails
@@ -110,7 +110,8 @@ A privacy-first native mobile application for iOS and Android that provides real
 - **Apple Design System**: SF Pro fonts, iOS color palette, 8pt grid
 
 ### Navigation
-- **@react-navigation/native**: Native stack navigator
+- **@react-navigation/stack**: JavaScript stack navigator (Expo Go compatible)
+- **react-native-gesture-handler**: Required for stack navigator
 - **react-native-screens**: Native screen components
 - **react-native-safe-area-context**: Safe area insets
 
