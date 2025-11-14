@@ -99,8 +99,13 @@ export function useAudioRecorder() {
 
       mediaStreamRef.current = stream;
 
-      const audioContext = new AudioContext({ sampleRate: 48000 });
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContextClass({ sampleRate: 48000 });
       audioContextRef.current = audioContext;
+      
+      if (audioContext.state === 'suspended') {
+        await audioContext.resume();
+      }
 
       const source = audioContext.createMediaStreamSource(stream);
       const analyser = audioContext.createAnalyser();
@@ -109,8 +114,13 @@ export function useAudioRecorder() {
 
       analyserRef.current = analyser;
 
-      voiceAnalyzerRef.current = new VoiceAnalyzer();
-      voiceAnalyzerRef.current.createAnalyzer(audioContext, source);
+      try {
+        voiceAnalyzerRef.current = new VoiceAnalyzer();
+        voiceAnalyzerRef.current.createAnalyzer(audioContext, source);
+      } catch (meydaError) {
+        console.warn('Meyda not available on this browser, voice metrics disabled:', meydaError);
+        voiceAnalyzerRef.current = null;
+      }
 
       const options: MediaRecorderOptions = {};
       const mimeTypes = [

@@ -9,7 +9,7 @@ const PITCH_RANGES = {
 
 const COLORS = {
   BLUE: { r: 59, g: 130, b: 246 },
-  RED: { r: 255, b: 59, g: 48 },
+  RED: { r: 255, g: 48, b: 59 },
   YELLOW: { r: 255, g: 204, b: 0 },
   GRAY: { r: 156, g: 163, b: 175 },
 } as const;

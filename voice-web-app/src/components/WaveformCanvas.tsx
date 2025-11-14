@@ -23,8 +23,13 @@ export function WaveformCanvas({ samples, currentTime, onSeek, isPlaying }: Wave
 
     const dpr = window.devicePixelRatio || 1;
     const rect = container.getBoundingClientRect();
+    
+    if (rect.width === 0 || rect.height === 0) return;
+    
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
     ctx.scale(dpr, dpr);
 
     const width = rect.width;
