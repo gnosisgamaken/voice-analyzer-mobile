@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { Audio } from 'expo-av';
 import { Platform } from 'react-native';
 
 export interface PermissionStatus {
@@ -52,5 +53,55 @@ export async function ensureLocationPermission(): Promise<boolean> {
   }
   
   const requested = await requestLocationPermission();
+  return requested.granted;
+}
+
+export async function requestAudioPermission(): Promise<PermissionStatus> {
+  try {
+    const { status, canAskAgain } = await Audio.requestPermissionsAsync();
+    
+    return {
+      granted: status === 'granted',
+      canAskAgain,
+    };
+  } catch (error) {
+    console.error('Error requesting audio permission:', error);
+    return {
+      granted: false,
+      canAskAgain: false,
+    };
+  }
+}
+
+export async function checkAudioPermission(): Promise<PermissionStatus> {
+  try {
+    const { status, canAskAgain } = await Audio.getPermissionsAsync();
+    
+    return {
+      granted: status === 'granted',
+      canAskAgain,
+    };
+  } catch (error) {
+    console.error('Error checking audio permission:', error);
+    return {
+      granted: false,
+      canAskAgain: false,
+    };
+  }
+}
+
+export async function ensureAudioPermission(): Promise<boolean> {
+  const current = await checkAudioPermission();
+  
+  if (current.granted) {
+    return true;
+  }
+  
+  if (!current.canAskAgain) {
+    console.warn('Audio permission denied - cannot ask again. User must enable in settings.');
+    return false;
+  }
+  
+  const requested = await requestAudioPermission();
   return requested.granted;
 }

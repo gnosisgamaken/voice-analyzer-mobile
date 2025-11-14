@@ -1,10 +1,12 @@
 import { useState, useRef, useCallback } from 'react';
+import { Alert } from 'react-native';
 import { useAudioRecorder as useExpoAudioRecorder, RecordingPresets, RecordingOptions } from 'expo-audio';
 import { VoiceAnalyzer, AudioFeatures, calculateVoiceMetrics } from '../utils/enhancedAudioAnalysis';
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
 import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
 import { getCurrentLocation, generateRecordingName, LocationData } from '../utils/locationService';
 import { saveRecordingMetadata, saveAudioFile, initializeStorage } from '../utils/storage';
+import { ensureAudioPermission } from '../utils/permissions';
 
 const RECORDING_OPTIONS: RecordingOptions = RecordingPresets.HIGH_QUALITY;
 
@@ -78,6 +80,18 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const startRecording = useCallback(async () => {
     try {
       console.log('[SAVE DEBUG] 🎙️ Start recording called');
+      
+      const hasPermission = await ensureAudioPermission();
+      if (!hasPermission) {
+        console.error('[SAVE DEBUG] ❌ Audio permission denied');
+        Alert.alert(
+          'Permission Required',
+          'Microphone access is required to record audio. Please enable it in your device settings.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      console.log('[SAVE DEBUG] ✅ Audio permission granted');
       
       await initializeStorage();
       locationRef.current = await getCurrentLocation();
