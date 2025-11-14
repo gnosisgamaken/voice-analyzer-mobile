@@ -1,7 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Alert, Platform } from 'react-native';
-import { useAudioRecorder as useExpoAudioRecorder, RecordingPresets, RecordingOptions } from 'expo-audio';
-import { Audio } from 'expo-av';
+import { useAudioRecorder as useExpoAudioRecorder, RecordingPresets, RecordingOptions, setAudioModeAsync } from 'expo-audio';
 import { VoiceAnalyzer, AudioFeatures, calculateVoiceMetrics } from '../utils/enhancedAudioAnalysis';
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
 import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
@@ -108,9 +107,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       
       try {
         console.log('[SAVE DEBUG] Setting audio mode for iOS...');
-        await Audio.setAudioModeAsync({
-          allowsRecordingIOS: true,
-          playsInSilentModeIOS: true,
+        await setAudioModeAsync({
+          allowsRecording: true,
+          playsInSilentMode: true,
         });
         console.log('[SAVE DEBUG] ✅ Audio mode set successfully');
       } catch (audioModeError) {
