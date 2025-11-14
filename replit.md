@@ -2,333 +2,69 @@
 
 ## Overview
 
-A privacy-first native mobile application for iOS and Android that provides real-time voice analysis, emotion detection, and vocal health monitoring - all processing done on-device with zero cloud dependencies.
-
-**Target Users:** Voice professionals (receptionists, tour guides, salespeople, lawyers) who need conversation analysis, voice fatigue monitoring, and emotion/stress detection.
-
-**Platform:** React Native with Expo SDK 54
-
-## Current Status
-
-### ✅ Completed (Sprint 1.1, 1.2, 1.3, 1.4, 1.5 & 1.6)
-- **Project Setup**:
-  - Expo TypeScript template initialized with React Native 0.81.5
-  - Project structure: `src/` with screens, components, hooks, utils, types folders
-  - Workflow running successfully on port 5000 (web preview)
-  - **100% Expo Go compatible** - no custom native modules required
-  
-- **Dependencies Installed**:
-  - `expo-audio` (SDK 54's new audio package)
-  - `fft-js` (JavaScript FFT for spectral analysis)
-  - `@shopify/react-native-skia` 2.2.12 (GPU-accelerated graphics)
-  - `expo-haptics`, `expo-location`, `expo-file-system`
-  - `@react-native-async-storage/async-storage`
-  - React Navigation packages (stack navigator, screens, safe area, gesture-handler)
-  - `react-native-reanimated` ~3.15.0 (matches Expo Go SDK 54's bundled version)
-  - `react-dom`, `react-native-web` (for web preview)
-
-- **Audio Analysis Engine**:
-  - ✅ `VoiceAnalyzer` class with FFT-based feature extraction
-  - ✅ 7 spectral features: spectralCentroid, spectralFlatness, spectralFlux, loudness, energy, ZCR, RMS
-  - ✅ A-weighting for perceptual loudness
-  - ✅ Voice metrics calculations: brightness, clarity, richness, energy, pitchStability
-  - ✅ Normalization to 0-1 range with realistic scaling
-  - ✅ Metric interpretation (Warm/Bright, Clear/Noisy, etc.)
-
-- **Audio Recording**:
-  - ✅ `useAudioRecorder` hook with expo-audio integration
-  - ✅ Recording state management (idle/recording/paused/stopped)
-  - ✅ Start/pause/resume/stop functionality
-  - ✅ Accurate duration tracking across pause cycles
-  - ✅ Location capture on recording start for auto-naming
-  - ✅ Average metrics calculation across all samples
-  - ⚠️ **Note**: Real-time PCM access requires custom development build (see AUDIO_IMPLEMENTATION_NOTES.md)
-
-- **Core Utilities**:
-  - ✅ Pitch detection via autocorrelation (50-500 Hz range)
-  - ✅ RMS calculation, dB conversion, normalization
-  - ✅ Pitch-to-color mapping (Blue→Red→Yellow gradient)
-  - ✅ TypeScript type definitions matching PWA architecture
-
-- **UI Components (Sprint 1.3)**:
-  - ✅ **WaveformView**: Skia-based GPU-accelerated waveform visualization with pitch-colored bars
-  - ✅ **RecordingControls**: iOS-style controls with haptic feedback (record/pause/resume/stop)
-  - ✅ **VoiceMetrics**: 5 metric cards with gradient progress bars and interpretive labels
-  - ✅ **MainRecordingScreen**: Complete integration with SafeAreaView, ScrollView, memory-efficient sample buffering (100-sample ring buffer)
-
-- **Storage & Persistence (Sprint 1.4)**:
-  - ✅ **Permissions**: `permissions.ts` utility for audio + location permissions with ensureAudioPermission()
-  - ✅ **Location Service**: GPS coordinates + reverse geocoding for auto-naming recordings
-  - ✅ **Storage**: Migrated to Expo SDK 54 new FileSystem API (File/Directory classes)
-  - ✅ **RecordingsListScreen**: Display saved recordings with duration, location, date, metrics
-  - ✅ **Delete Functionality**: Remove both metadata and audio files with confirmation
-  - ✅ **Navigation**: Custom SimpleNavigator (pure React state, Expo Go compatible)
-  - ✅ **Platform Safety**: Web-compatible code with Platform.OS guards
-
-- **Audio Playback (Sprint 1.5)**:
-  - ✅ **useAudioPlayer Hook**: expo-audio integration with memory leak prevention
-  - ✅ **PlaybackControls**: iOS-style play/pause/stop with optimistic seek slider
-  - ✅ **RecordingDetailsScreen**: Full recording info with playback integration
-  - ✅ **Memory Management**: isMounted guards, proper cleanup, interval timer management
-  - ✅ **Navigation**: Tap recording cards to view details and play audio
-
-- **Bug Fixes & Polish (Sprint 1.6)**:
-  - ✅ **Audio Permissions**: Fixed "Recording permission has not been granted" error
-  - ✅ **FileSystem Migration**: Migrated to SDK 54's new File/Directory API (deprecated legacy API removed)
-  - ✅ **Permission Flow**: Added ensureAudioPermission() with Alert dialog for denied access
-  - ✅ **Storage Logging**: Enhanced debug logging for save/load operations
-
-- **Configuration**:
-  - ✅ iOS/Android microphone permissions with runtime request flow
-  - ✅ Location permissions for auto-naming
-  - ✅ FFT-js type declarations
-  - ✅ Babel config: `babel-preset-expo` (removed Reanimated for Expo Go compatibility)
-  - ✅ **Expo Go Compatible**: Pure JavaScript navigation and UI (no native dependencies)
-
-### 📋 Next Steps
-- Sprint 1.7: Export/share functionality (native share sheet)
-- Sprint 1.8: Enhanced list features (search, filter, sort)
-- Sprint 1.9: Waveform thumbnails for recordings list
-- Phase 2: Emotion detection with TensorFlow.js
-- Phase 3: Voice health metrics (jitter, shimmer, HNR)
-
-### ⚠️ Important Notes
-
-**Mobile Readiness**: All UI components, audio analysis, and features are **100% mobile-ready**. See `MOBILE_READINESS.md` for complete details on what works now vs what needs development build.
-
-**Real-Time Audio**: Expo's `expo-audio` AudioRecorder does not provide PCM frames during recording in managed workflow. Real-time analysis currently uses simulated data for UI/UX development. See `AUDIO_IMPLEMENTATION_NOTES.md` for:
-- Technical details of the limitation
-- Path forward (custom development build with native module)
-- Timeline estimates (MVP UI: 2-3 days, Real audio: 3-5 days)
-
-**Web Preview**: Uses simulated audio data for testing UI/UX flows. All analysis code is ready - only data source needs swapping for real audio on mobile.
-
-## Tech Stack
-
-### Core Framework
-- **React Native**: 0.81.5 with Expo SDK 54
-- **TypeScript**: Strict mode enabled
-- **Bundler**: Metro (Expo)
-
-### Audio Processing
-- **expo-av**: Audio recording and playback
-- **Custom algorithms**: Pitch detection (autocorrelation), RMS, voice metrics
-
-### Graphics & UI
-- **@shopify/react-native-skia**: GPU-accelerated waveform visualization (planned)
-- **Apple Design System**: SF Pro fonts, iOS color palette, 8pt grid
-
-### Navigation
-- **SimpleNavigator**: Custom pure-React navigation (Expo Go compatible, no native dependencies)
-
-### Storage
-- **@react-native-async-storage/async-storage**: Metadata storage
-- **expo-file-system**: Audio file management
-
-### Location
-- **expo-location**: GPS coordinates + reverse geocoding
-
-### Haptics
-- **expo-haptics**: 7 vibration patterns (light, medium, heavy, selection, success, warning, error)
-
-### Machine Learning (Future)
-- **@tensorflow/tfjs-react-native**: On-device emotion detection
-- **expo-gl**: GPU acceleration for ML
-
-## Project Structure
-
-```
-voice-analyzer-mobile/
-├── app.json                 # Expo configuration with permissions
-├── App.tsx                  # Root component
-├── package.json
-├── tsconfig.json
-├── src/
-│   ├── screens/
-│   │   └── MainRecordingScreen.tsx    # Primary recording interface ✅
-│   ├── components/
-│   │   ├── WaveformView.tsx           # Skia waveform visualization ✅
-│   │   ├── RecordingControls.tsx      # Haptic control buttons ✅
-│   │   └── VoiceMetrics.tsx           # Metrics display cards ✅
-│   ├── hooks/
-│   │   └── useAudioRecorder.ts        # Recording state management ✅
-│   ├── utils/
-│   │   ├── audioAnalysis.ts           # RMS, dB, pitch detection ✅
-│   │   ├── pitchToColor.ts            # Color mapping utility ✅
-│   │   └── enhancedAudioAnalysis.ts   # VoiceAnalyzer class, FFT processing ✅
-│   ├── types/
-│   │   └── index.ts                   # TypeScript interfaces ✅
-│   └── navigation/          (planned for Sprint 1.6)
-├── assets/
-│   └── images/
-├── REACT_NATIVE_IMPLEMENTATION_PLAN.md
-└── AUDIO_IMPLEMENTATION_NOTES.md
-```
-
-## Features
-
-### Phase 1: MVP (Current Focus)
-
-**Real-Time Voice Analysis:**
-- 9 acoustic features: RMS, energy, ZCR, spectral centroid, spectral flatness, spectral flux, loudness, MFCCs
-- 5 user-friendly metrics: Brightness, Clarity, Richness, Energy, Pitch Stability
-- Pitch detection: 50-500 Hz (human voice range) using autocorrelation
-
-**Waveform Visualization:**
-- Pitch-based color coding (Blue→Red→Yellow gradient)
-- GPU-accelerated rendering with Skia
-- Last 100 samples (5 seconds at 20 Hz)
-
-**Recording Management:**
-- Start/pause/resume/stop controls
-- Accurate timing across pause cycles
-- Location-based auto-naming
-- Offline storage with metadata
-
-**Design:**
-- Apple-inspired minimalist interface
-- Native haptic feedback on all interactions
-- Safe area support (notch, home indicator)
-
-### Phase 2: Emotion Detection (Future)
-
-- 7 emotions: Neutral, Happy, Sad, Angry, Fearful, Surprised, Disgusted
-- Stress level: 0-100% score
-- On-device ML with TensorFlow.js
-- Real-time analysis every 1-2 seconds
-
-### Phase 3: Voice Health Metrics (Future)
-
-- Jitter: Pitch perturbation (<1% normal, >1.04% fatigue)
-- Shimmer: Amplitude perturbation (<3.81% normal)
-- HNR: Harmonic-to-Noise Ratio (>20 dB normal, <13 dB hoarse)
-- Daily/weekly trend tracking
-- Voice fatigue warnings
-
-## Code Reusability from PWA
-
-### 100% Portable (No Changes)
-- ✅ `audioAnalysis.ts`: RMS, dB conversion, pitch detection
-- ✅ `pitchToColor.ts`: Color mapping with smooth interpolation
-- ✅ Voice metrics calculation logic
-- ✅ TensorFlow.js models (future)
-- ✅ Jitter/Shimmer/HNR algorithms (future)
-
-### Adapted for React Native
-- ⚠️ Audio capture: Web Audio API → Expo AV
-- ⚠️ Feature extraction: Meyda.js → Custom/Expo Audio Studio
-- ⚠️ Storage: IndexedDB → AsyncStorage + FileSystem
-- ⚠️ Rendering: Canvas → React Native Skia
-- ⚠️ Haptics: Vibration API → Expo Haptics
-
-## Permissions
-
-### iOS (Info.plist)
-```xml
-<key>NSMicrophoneUsageDescription</key>
-<string>This app needs microphone access to analyze your voice in real-time</string>
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>We use your location to auto-name recordings with your city</string>
-```
-
-### Android (AndroidManifest.xml)
-- `RECORD_AUDIO`: Microphone access
-- `ACCESS_FINE_LOCATION`: GPS for auto-naming
-
-## Design System
-
-### Colors
-```typescript
-{
-  background: '#F2F2F7',      // Apple Gray 6
-  card: '#FFFFFF',
-  blue: '#007AFF',            // iOS Blue
-  red: '#FF3B30',
-  green: '#34C759',
-  text: '#000000',
-  secondaryText: '#8E8E93',
-  
-  // Pitch colors
-  pitchLow: 'rgb(59, 130, 246)',     // Blue
-  pitchMid: 'rgb(255, 48, 59)',      // Red
-  pitchHigh: 'rgb(255, 204, 0)',     // Yellow
-  pitchGray: 'rgb(156, 163, 175)',   // Gray (unpitched)
-}
-```
-
-### Typography
-- **Large Title**: 34pt, SF Pro Display, Bold
-- **Title**: 22pt, SF Pro Display, Regular
-- **Body**: 17pt, SF Pro Text, Regular
-- **Caption**: 12pt, SF Pro Text, Regular
-
-### Spacing
-- xs: 4pt, sm: 8pt, md: 16pt, lg: 24pt, xl: 32pt
-
-## Known Issues
-
-### Node.js Engine Warnings
-- Current: Node v20.19.3
-- Required: Node v20.19.4
-- **Impact**: None (warnings only, app runs fine)
-- **Reason**: React Native 0.81.5 requires exact version
-
-### Package Version Warnings
-- @shopify/react-native-skia: 2.3.12 installed, 2.2.12 expected
-- **Impact**: May have minor compatibility issues
-- **Action**: Monitor for breaking changes
-
-## Development Commands
-
-```bash
-# Start Expo dev server
-cd voice-analyzer-mobile
-npx expo start
-
-# Start web preview
-npx expo start --web --port 5000
-
-# Run on iOS simulator
-npx expo start --ios
-
-# Run on Android emulator
-npx expo start --android
-
-# Install new packages
-npx expo install <package-name>
-```
-
-## Next Steps (Sprint 1.6 - Export & Share)
-
-1. **Export Functionality**:
-   - Share recordings via native share sheet
-   - Export audio files to device storage
-   - Export metrics as CSV/JSON
-   - Copy to clipboard functionality
-
-2. **Enhanced List Screen**:
-   - Add waveform thumbnails for each recording
-   - Implement search/filter functionality
-   - Sort options (date, duration, location)
-   - Batch delete functionality
-
-3. **Voice Health Metrics** (Future):
-   - Jitter calculation (pitch perturbation)
-   - Shimmer calculation (amplitude perturbation)
-   - HNR (Harmonic-to-Noise Ratio)
-   - Daily/weekly trend tracking
-
-## References
-
-- **Mobile Readiness Status**: `MOBILE_READINESS.md` - Detailed breakdown of what's mobile-ready vs simulated
-- **Implementation Plan**: `REACT_NATIVE_IMPLEMENTATION_PLAN.md`
-- **Audio Implementation**: `AUDIO_IMPLEMENTATION_NOTES.md`
-- Expo Audio Studio: https://www.npmjs.com/package/@siteed/expo-audio-studio
-- React Native Skia: https://shopify.github.io/react-native-skia/
-- Expo Documentation: https://docs.expo.dev/
-- Apple HIG: https://developer.apple.com/design/human-interface-guidelines/
-
----
-
-**Last Updated**: November 14, 2025 (Sprint 1.6 completed - Permissions & FileSystem fixes)
-**Version**: 0.5.0 (Ready for real device testing - audio recording with proper permissions)
+Voice Analyzer is a privacy-first native mobile application for iOS and Android that provides real-time voice analysis, emotion detection, and vocal health monitoring. All processing is done on-device with zero cloud dependencies. It targets voice professionals (e.g., receptionists, tour guides, salespeople, lawyers) who need conversation analysis, voice fatigue monitoring, and emotion/stress detection.
+
+## User Preferences
+
+- I prefer simple language and clear explanations.
+- I like an iterative development approach, with regular updates and feedback loops.
+- Please ask before making major architectural changes or introducing new dependencies.
+- Ensure all solutions prioritize on-device processing and user privacy.
+- For UI/UX, adhere to an Apple-inspired minimalist design with native haptic feedback.
+- When working on audio features, always prioritize testing on physical devices using development builds, as the web preview might not accurately represent native audio behavior.
+- I want detailed explanations for any complex technical decisions or trade-offs.
+
+## System Architecture
+
+The application is built with React Native (0.81.5) and Expo SDK 54, utilizing TypeScript in strict mode. It follows a dual-track development strategy: a web preview for fast UI iteration and EAS development builds for real audio and native feature testing.
+
+**UI/UX Decisions:**
+- **Design System:** Adheres to Apple's Human Interface Guidelines, using SF Pro fonts, iOS color palette, and an 8pt grid.
+- **Color Scheme:** Utilizes a clean palette including Apple Gray 6 for background, white for cards, and standard iOS primary colors (blue, red, green). Pitch visualization uses a blue-red-yellow gradient.
+- **Typography:** Defined hierarchy including Large Title (34pt Bold), Title (22pt Regular), Body (17pt Regular), and Caption (12pt Regular) from SF Pro fonts.
+- **Spacing:** Consistent spacing system (4pt, 8pt, 16pt, 24pt, 32pt).
+- **Interactions:** Native haptic feedback for all user interactions.
+- **Waveform Visualization:** GPU-accelerated rendering using `@shopify/react-native-skia` with pitch-based color coding.
+
+**Technical Implementations & Feature Specifications:**
+- **Real-Time Voice Analysis:**
+    - Extracts 9 acoustic features (RMS, energy, ZCR, spectral centroid, spectral flatness, spectral flux, loudness, MFCCs) using a custom `VoiceAnalyzer` class with FFT-based processing.
+    - Calculates 5 user-friendly metrics: Brightness, Clarity, Richness, Energy, Pitch Stability.
+    - Implements pitch detection (50-500 Hz range) via autocorrelation.
+    - All analysis and metrics are normalized to a 0-1 range.
+- **Audio Recording:** Leverages `expo-av` for stable audio recording with state management (idle/recording/paused/stopped), accurate duration tracking, and location capture for auto-naming.
+- **Audio Playback:** `useAudioPlayer` hook integrates `expo-av` for playback, including iOS-style controls and an optimistic seek slider.
+- **Storage & Persistence:** Uses `@react-native-async-storage/async-storage` for metadata and `expo-file-system` for managing audio files. Location data from `expo-location` is used for auto-naming recordings.
+- **Permissions:** Robust handling of microphone and location permissions with runtime requests and user feedback.
+- **Navigation:** A custom `SimpleNavigator` (pure React state) ensures Expo Go compatibility without native dependencies.
+- **Core Utilities:** Includes `audioAnalysis.ts` for RMS, dB conversion, pitch detection, and `pitchToColor.ts` for color mapping.
+
+**System Design Choices:**
+- **On-device processing:** Ensures user privacy by performing all analysis locally without cloud services.
+- **Modular Project Structure:** Organized into `screens`, `components`, `hooks`, `utils`, and `types` within the `src/` directory for maintainability.
+- **Error Handling & Cleanup:** Includes `isMounted` guards and proper cleanup functions for audio and timers to prevent memory leaks.
+- **Platform Guards:** Code includes `Platform.OS` guards to adapt functionality (e.g., simulated audio on web, real audio on native).
+
+## External Dependencies
+
+- **Core Framework:**
+    - `react-native`: 0.81.5
+    - `expo`: SDK 54
+    - `typescript`
+- **Audio Processing:**
+    - `expo-av`: For audio recording and playback.
+    - `fft-js`: JavaScript Fast Fourier Transform for spectral analysis.
+- **Graphics & UI:**
+    - `@shopify/react-native-skia`: For GPU-accelerated waveform visualization.
+- **Storage:**
+    - `@react-native-async-storage/async-storage`: For persistent metadata storage.
+    - `expo-file-system`: For managing audio files on the device.
+- **Location Services:**
+    - `expo-location`: For capturing GPS coordinates and reverse geocoding.
+- **Haptics:**
+    - `expo-haptics`: For native haptic feedback.
+- **Development Tools:**
+    - `expo-dev-client`: Enables development builds for native module testing.
+- **Future Integrations:**
+    - `@tensorflow/tfjs-react-native`: Planned for on-device emotion detection.
+    - `expo-gl`: Planned for GPU acceleration for ML models.
