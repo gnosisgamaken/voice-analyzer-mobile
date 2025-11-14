@@ -48,17 +48,3 @@ export function autoCorrelatePitch(buf: Float32Array, sampleRate: number): numbe
   const freq = sampleRate / bestLag;
   return (freq >= 50 && freq <= 500) ? freq : null;
 }
-
-export function pitchToColor(pitchHz: number | null): string {
-  if (pitchHz === null) return 'hsl(0, 0%, 60%)';
-
-  const minPitch = 80;
-  const maxPitch = 400;
-  const clampedPitch = Math.max(minPitch, Math.min(maxPitch, pitchHz));
-  const normalizedPitch = (clampedPitch - minPitch) / (maxPitch - minPitch);
-
-  const hue = normalizedPitch * 280 + 240;
-  const finalHue = hue > 360 ? hue - 360 : hue;
-
-  return `hsl(${finalHue}, 75%, 55%)`;
-}

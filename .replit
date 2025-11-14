@@ -12,27 +12,27 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Voice Web App"
+args = "Voice Analyzer Mobile"
 
 [[workflows.workflow]]
-name = "Voice Web App"
+name = "Voice Analyzer Mobile"
 author = "agent"
-
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "cd voice-web-app && npm run dev"
-waitForPort = 5000
 
 [workflows.workflow.metadata]
 outputType = "webview"
 
-[[ports]]
-localPort = 5000
-externalPort = 5000
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "cd voice-analyzer-mobile && npx expo start --web --port 5000"
+waitForPort = 5000
 
 [[ports]]
-localPort = 8081
+localPort = 5000
 externalPort = 80
+
+[[ports]]
+localPort = 43637
+externalPort = 3000
 
 [nix]
 channel = "stable-25_05"
