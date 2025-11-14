@@ -10,7 +10,7 @@ A privacy-first native mobile application for iOS and Android that provides real
 
 ## Current Status
 
-### ✅ Completed (Sprint 1.1, 1.2 & 1.3)
+### ✅ Completed (Sprint 1.1, 1.2, 1.3 & 1.4)
 - **Project Setup**:
   - Expo TypeScript template initialized with React Native 0.81.5
   - Project structure: `src/` with screens, components, hooks, utils, types folders
@@ -38,6 +38,8 @@ A privacy-first native mobile application for iOS and Android that provides real
   - ✅ Recording state management (idle/recording/paused/stopped)
   - ✅ Start/pause/resume/stop functionality
   - ✅ Accurate duration tracking across pause cycles
+  - ✅ Location capture on recording start for auto-naming
+  - ✅ Average metrics calculation across all samples
   - ⚠️ **Note**: Real-time PCM access requires custom development build (see AUDIO_IMPLEMENTATION_NOTES.md)
 
 - **Core Utilities**:
@@ -52,13 +54,22 @@ A privacy-first native mobile application for iOS and Android that provides real
   - ✅ **VoiceMetrics**: 5 metric cards with gradient progress bars and interpretive labels
   - ✅ **MainRecordingScreen**: Complete integration with SafeAreaView, ScrollView, memory-efficient sample buffering (100-sample ring buffer)
 
+- **Storage & Persistence (Sprint 1.4)**:
+  - ✅ **Permissions**: `permissions.ts` utility for requesting/checking location permissions
+  - ✅ **Location Service**: GPS coordinates + reverse geocoding for auto-naming recordings
+  - ✅ **Storage**: AsyncStorage for metadata, expo-file-system for audio files
+  - ✅ **RecordingsListScreen**: Display saved recordings with duration, location, date, metrics
+  - ✅ **Delete Functionality**: Remove both metadata and audio files with confirmation
+  - ✅ **Navigation**: React Navigation stack with type-safe routing
+  - ✅ **Platform Safety**: Web-compatible code with Platform.OS guards
+
 - **Configuration**:
   - ✅ iOS/Android microphone permissions
   - ✅ Location permissions for auto-naming
   - ✅ FFT-js type declarations
 
 ### 📋 Planned
-- Sprint 1.4-1.8: Storage, location services, navigation, playback
+- Sprint 1.5-1.8: Audio playback, recording details view, export/share functionality
 - Phase 2: Emotion detection with TensorFlow.js
 - Phase 3: Voice health metrics (jitter, shimmer, HNR)
 
@@ -270,29 +281,25 @@ npx expo start --android
 npx expo install <package-name>
 ```
 
-## Next Steps (Sprint 1.4 - Storage & Persistence)
+## Next Steps (Sprint 1.5 - Audio Playback)
 
-1. **AsyncStorage Integration**:
-   - Save recording metadata (timestamp, duration, location, metrics averages)
-   - Store recordings list with unique IDs
-   - Implement data serialization/deserialization
+1. **Audio Playback Utilities**:
+   - Create playback hook using expo-av
+   - Implement play/pause/seek controls
+   - Track playback progress
+   - Handle playback errors gracefully
 
-2. **FileSystem Integration**:
-   - Save audio files to local storage
-   - Generate unique filenames (timestamp-based)
-   - Implement file deletion/cleanup
+2. **Recording Details Screen**:
+   - Display waveform visualization of saved recording
+   - Show full metrics breakdown
+   - Playback controls with seek bar
+   - Export/share options
 
-3. **Location Services**:
-   - Request location permissions
-   - Get GPS coordinates on recording start
-   - Reverse geocoding for city/place names
-   - Auto-naming: "Recording - [City] - [Date]"
-
-4. **Recordings List Screen** (Sprint 1.5):
-   - Display saved recordings with thumbnails
-   - Show duration, location, date
-   - Delete functionality
-   - Navigate to playback screen
+3. **Enhanced List Screen**:
+   - Add waveform thumbnails for each recording
+   - Implement search/filter functionality
+   - Sort options (date, duration, location)
+   - Batch delete functionality
 
 ## References
 
@@ -306,5 +313,5 @@ npx expo install <package-name>
 
 ---
 
-**Last Updated**: November 14, 2025 (Sprint 1.3 completed)
-**Version**: 0.2.0 (UI MVP completed, storage/playback next)
+**Last Updated**: November 14, 2025 (Sprint 1.4 completed)
+**Version**: 0.3.0 (Storage & Persistence MVP completed, playback next)
