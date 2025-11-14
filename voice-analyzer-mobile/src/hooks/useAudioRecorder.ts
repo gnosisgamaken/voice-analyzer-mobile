@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import { Alert, Platform } from 'react-native';
 import { Audio } from 'expo-av';
+import * as FileSystem from 'expo-file-system';
 import { VoiceAnalyzer, AudioFeatures, calculateVoiceMetrics } from '../utils/enhancedAudioAnalysis';
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
 import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
@@ -255,8 +256,6 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           console.log('[RECORDING] Recording stopped, URI:', uri);
           
           if (uri) {
-            const FileSystem = await import('expo-file-system');
-            
             const fileInfo = await FileSystem.getInfoAsync(uri);
             const fileExists = fileInfo.exists;
             const fileSize = fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 0;
