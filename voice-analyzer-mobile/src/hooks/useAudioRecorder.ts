@@ -248,20 +248,32 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         await recorder.stop();
         console.log('[SAVE DEBUG] recorder.stop() completed');
         
-        await new Promise(resolve => setTimeout(resolve, 200));
-        
         uri = recorder.uri;
-        console.log('[SAVE DEBUG] Recorder URI after stop:', uri);
-        console.log('[SAVE DEBUG] URI exists check via File class...');
+        console.log('[SAVE DEBUG] Recorder URI:', uri);
         
         if (uri) {
-          try {
-            const { File } = await import('expo-file-system');
-            const file = new File(uri);
-            console.log('[SAVE DEBUG] File exists:', file.exists);
-            console.log('[SAVE DEBUG] File size:', file.size);
-          } catch (checkError) {
-            console.error('[SAVE DEBUG] Error checking file:', checkError);
+          console.log('[SAVE DEBUG] Waiting for file to be written to disk...');
+          const { File } = await import('expo-file-system');
+          const file = new File(uri);
+          
+          const maxAttempts = 20;
+          let attempts = 0;
+          let fileExists = false;
+          
+          while (attempts < maxAttempts && !fileExists) {
+            fileExists = file.exists;
+            if (!fileExists) {
+              await new Promise(resolve => setTimeout(resolve, 100));
+              attempts++;
+            }
+          }
+          
+          if (fileExists) {
+            console.log('[SAVE DEBUG] ✅ File ready after', attempts * 100, 'ms');
+            console.log('[SAVE DEBUG] File size:', file.size, 'bytes');
+          } else {
+            console.error('[SAVE DEBUG] ❌ File still not ready after 2 seconds - recording may be lost');
+            uri = null;
           }
         }
       } else {
