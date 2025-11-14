@@ -23,6 +23,7 @@ A privacy-first native mobile application for iOS and Android that provides real
   - `expo-haptics`, `expo-location`, `expo-file-system`
   - `@react-native-async-storage/async-storage`
   - React Navigation packages (native stack, screens, safe area)
+  - `react-native-reanimated` 4.1.1 + `react-native-worklets` 0.5.1 (required peer dependency for Expo Go)
   - `react-dom`, `react-native-web` (for web preview)
 
 - **Audio Analysis Engine**:
@@ -74,6 +75,8 @@ A privacy-first native mobile application for iOS and Android that provides real
   - ✅ iOS/Android microphone permissions
   - ✅ Location permissions for auto-naming
   - ✅ FFT-js type declarations
+  - ✅ Babel config: `babel-preset-expo` auto-configures reanimated (no manual plugin needed)
+  - ✅ Critical fix: Added `react-native-worklets@0.5.1` (peer dependency required by Reanimated 4.1 for Expo Go)
 
 ### 📋 Planned
 - Sprint 1.6-1.8: Export/share functionality, enhanced list features, waveform thumbnails
