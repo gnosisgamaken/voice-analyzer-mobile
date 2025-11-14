@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
-import { Alert } from 'react-native';
+import { Alert, Platform } from 'react-native';
 import { useAudioRecorder as useExpoAudioRecorder, RecordingPresets, RecordingOptions } from 'expo-audio';
+import { Audio } from 'expo-av';
 import { VoiceAnalyzer, AudioFeatures, calculateVoiceMetrics } from '../utils/enhancedAudioAnalysis';
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
 import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
@@ -81,6 +82,18 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     try {
       console.log('[SAVE DEBUG] 🎙️ Start recording called');
       
+      if (Platform.OS === 'web') {
+        console.log('[SAVE DEBUG] ⚠️ Web platform - recording simulation only');
+        setRecordingState('recording');
+        startTimeRef.current = Date.now();
+        totalPausedDurationRef.current = 0;
+        pauseStartTimeRef.current = 0;
+        allSamplesRef.current = [];
+        analyzerRef.current.reset();
+        intervalRef.current = setInterval(processAudioBuffer, 50);
+        return;
+      }
+      
       const hasPermission = await ensureAudioPermission();
       if (!hasPermission) {
         console.error('[SAVE DEBUG] ❌ Audio permission denied');
@@ -92,6 +105,17 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         return;
       }
       console.log('[SAVE DEBUG] ✅ Audio permission granted');
+      
+      try {
+        console.log('[SAVE DEBUG] Setting audio mode for iOS...');
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+        });
+        console.log('[SAVE DEBUG] ✅ Audio mode set successfully');
+      } catch (audioModeError) {
+        console.error('[SAVE DEBUG] ❌ Failed to set audio mode:', audioModeError);
+      }
       
       await initializeStorage();
       locationRef.current = await getCurrentLocation();
@@ -106,16 +130,12 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       console.log('[SAVE DEBUG] Recorder available:', !!recorder);
       console.log('[SAVE DEBUG] Recorder.record available:', !!recorder?.record);
       
-      try {
-        if (recorder?.record) {
-          console.log('[SAVE DEBUG] Calling recorder.record()...');
-          await recorder.record();
-          console.log('[SAVE DEBUG] ✅ Recording started successfully');
-        } else {
-          console.log('[SAVE DEBUG] ⚠️ Recorder.record() not available');
-        }
-      } catch (recorderError) {
-        console.warn('[SAVE DEBUG] ❌ Recorder error (expected in web preview):', recorderError);
+      if (recorder?.record) {
+        console.log('[SAVE DEBUG] Calling recorder.record()...');
+        await recorder.record();
+        console.log('[SAVE DEBUG] ✅ Recording started successfully');
+      } else {
+        console.log('[SAVE DEBUG] ⚠️ Recorder.record() not available');
       }
       
       setRecordingState('recording');
@@ -127,12 +147,14 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   }, [processAudioBuffer, recorder]);
 
   const pauseRecording = useCallback(async () => {
-    try {
-      if (recorder?.pause) {
-        await recorder.pause();
+    if (Platform.OS !== 'web') {
+      try {
+        if (recorder?.pause) {
+          await recorder.pause();
+        }
+      } catch (error) {
+        console.warn('Recorder pause failed:', error);
       }
-    } catch (error) {
-      console.warn('Recorder pause failed (expected in web preview):', error);
     }
     
     setRecordingState('paused');
@@ -146,12 +168,14 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   }, [recorder]);
 
   const resumeRecording = useCallback(async () => {
-    try {
-      if (recorder?.record) {
-        await recorder.record();
+    if (Platform.OS !== 'web') {
+      try {
+        if (recorder?.record) {
+          await recorder.record();
+        }
+      } catch (error) {
+        console.warn('Recorder resume failed:', error);
       }
-    } catch (error) {
-      console.warn('Recorder resume failed (expected in web preview):', error);
     }
     
     setRecordingState('recording');
@@ -201,15 +225,23 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
       console.log('[SAVE DEBUG] 🛑 Stop recording called');
+      console.log('[SAVE DEBUG] Platform:', Platform.OS);
       console.log('[SAVE DEBUG] Current duration:', duration);
-      console.log('[SAVE DEBUG] Recorder exists:', !!recorder);
-      console.log('[SAVE DEBUG] Recorder.stop exists:', !!recorder?.stop);
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
 
+      if (Platform.OS === 'web') {
+        console.log('[SAVE DEBUG] ⚠️ Web platform - no real audio to save');
+        resetRecording();
+        return null;
+      }
+
+      console.log('[SAVE DEBUG] Recorder exists:', !!recorder);
+      console.log('[SAVE DEBUG] Recorder.stop exists:', !!recorder?.stop);
+      
       let uri: string | null | undefined;
       
       if (recorder?.stop) {
@@ -217,14 +249,22 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         await recorder.stop();
         console.log('[SAVE DEBUG] recorder.stop() completed');
         
-        await new Promise(resolve => setTimeout(resolve, 100));
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         uri = recorder.uri;
         console.log('[SAVE DEBUG] Recorder URI after stop:', uri);
-        console.log('[SAVE DEBUG] Recorder URI type:', typeof uri);
-        console.log('[SAVE DEBUG] Recorder object keys:', recorder ? Object.keys(recorder) : 'no recorder');
-        console.log('[SAVE DEBUG] Duration:', duration);
-        console.log('[SAVE DEBUG] Will save:', uri && duration > 0);
+        console.log('[SAVE DEBUG] URI exists check via File class...');
+        
+        if (uri) {
+          try {
+            const { File } = await import('expo-file-system');
+            const file = new File(uri);
+            console.log('[SAVE DEBUG] File exists:', file.exists);
+            console.log('[SAVE DEBUG] File size:', file.size);
+          } catch (checkError) {
+            console.error('[SAVE DEBUG] Error checking file:', checkError);
+          }
+        }
       } else {
         console.log('[SAVE DEBUG] ❌ Recorder or recorder.stop() not available');
       }
