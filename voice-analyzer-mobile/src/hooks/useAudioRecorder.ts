@@ -255,11 +255,11 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           console.log('[RECORDING] Recording stopped, URI:', uri);
           
           if (uri) {
-            const { File } = await import('expo-file-system');
+            const FileSystem = await import('expo-file-system');
             
-            const recorderFile = new File(uri);
-            const fileExists = recorderFile.exists;
-            const fileSize = recorderFile.size || 0;
+            const fileInfo = await FileSystem.getInfoAsync(uri);
+            const fileExists = fileInfo.exists;
+            const fileSize = fileInfo.exists && 'size' in fileInfo ? fileInfo.size : 0;
             
             console.log('[RECORDING] File exists:', fileExists);
             console.log('[RECORDING] File size:', fileSize, 'bytes');
