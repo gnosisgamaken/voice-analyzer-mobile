@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback } from 'react';
 import { Alert, Platform } from 'react-native';
-import { useAudioRecorder as useExpoAudioRecorder, RecordingPresets, RecordingOptions, setAudioModeAsync } from 'expo-audio';
+import { Audio } from 'expo-av';
 import { VoiceAnalyzer, AudioFeatures, calculateVoiceMetrics } from '../utils/enhancedAudioAnalysis';
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
 import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
@@ -8,7 +8,7 @@ import { getCurrentLocation, generateRecordingName, LocationData } from '../util
 import { saveRecordingMetadata, saveAudioFile, initializeStorage } from '../utils/storage';
 import { ensureAudioPermission } from '../utils/permissions';
 
-const RECORDING_OPTIONS: RecordingOptions = RecordingPresets.HIGH_QUALITY;
+const RECORDING_OPTIONS = Audio.RecordingOptionsPresets.HIGH_QUALITY;
 
 export interface UseAudioRecorderReturn {
   recordingState: RecordingState;
@@ -26,7 +26,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const [currentSample, setCurrentSample] = useState<VoiceSample | null>(null);
   const [duration, setDuration] = useState(0);
 
-  const recorder = useExpoAudioRecorder(RECORDING_OPTIONS);
+  const recorderRef = useRef<Audio.Recording | null>(null);
   const analyzerRef = useRef<VoiceAnalyzer>(new VoiceAnalyzer(44100, 2048));
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
@@ -96,7 +96,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       
       const hasPermission = await ensureAudioPermission();
       if (!hasPermission) {
-        console.error('[SAVE DEBUG] ❌ Audio permission denied');
+        console.error('[RECORDING] ❌ Audio permission denied');
         Alert.alert(
           'Permission Required',
           'Microphone access is required to record audio. Please enable it in your device settings.',
@@ -104,22 +104,23 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         );
         return;
       }
-      console.log('[SAVE DEBUG] ✅ Audio permission granted');
+      console.log('[RECORDING] ✅ Audio permission granted');
       
       try {
-        console.log('[SAVE DEBUG] Setting audio mode for iOS...');
-        await setAudioModeAsync({
-          allowsRecording: true,
-          playsInSilentMode: true,
+        console.log('[RECORDING] Setting audio mode for recording...');
+        await Audio.setAudioModeAsync({
+          allowsRecordingIOS: true,
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: false,
         });
-        console.log('[SAVE DEBUG] ✅ Audio mode set successfully');
+        console.log('[RECORDING] ✅ Audio mode set successfully');
       } catch (audioModeError) {
-        console.error('[SAVE DEBUG] ❌ Failed to set audio mode:', audioModeError);
+        console.error('[RECORDING] ❌ Failed to set audio mode:', audioModeError);
       }
       
       await initializeStorage();
       locationRef.current = await getCurrentLocation();
-      console.log('[SAVE DEBUG] Location:', locationRef.current ? locationRef.current.formattedAddress : 'none');
+      console.log('[RECORDING] Location:', locationRef.current ? locationRef.current.formattedAddress : 'none');
       
       startTimeRef.current = Date.now();
       recordingStartTimeRef.current = Date.now();
@@ -128,33 +129,35 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       allSamplesRef.current = [];
       analyzerRef.current.reset();
       
-      console.log('[SAVE DEBUG] Recorder available:', !!recorder);
-      console.log('[SAVE DEBUG] Recorder.record available:', !!recorder?.record);
+      console.log('[RECORDING] Creating new Audio.Recording instance...');
+      const recording = new Audio.Recording();
       
-      if (recorder?.record) {
-        console.log('[SAVE DEBUG] Calling recorder.record()...');
-        await recorder.record();
-        console.log('[SAVE DEBUG] ✅ Recording started successfully');
-      } else {
-        console.log('[SAVE DEBUG] ⚠️ Recorder.record() not available');
+      try {
+        await recording.prepareToRecordAsync(RECORDING_OPTIONS);
+        await recording.startAsync();
+        recorderRef.current = recording;
+        console.log('[RECORDING] ✅ Recording started successfully');
+      } catch (recordError) {
+        console.error('[RECORDING] ❌ Failed to start recording:', recordError);
+        throw recordError;
       }
       
       setRecordingState('recording');
       intervalRef.current = setInterval(processAudioBuffer, 50);
     } catch (error) {
-      console.error('[SAVE DEBUG] ❌ Failed to start recording:', error);
+      console.error('[RECORDING] ❌ Failed to start recording:', error);
       setRecordingState('idle');
     }
-  }, [processAudioBuffer, recorder]);
+  }, [processAudioBuffer]);
 
   const pauseRecording = useCallback(async () => {
     if (Platform.OS !== 'web') {
       try {
-        if (recorder?.pause) {
-          await recorder.pause();
+        if (recorderRef.current) {
+          await recorderRef.current.pauseAsync();
         }
       } catch (error) {
-        console.warn('Recorder pause failed:', error);
+        console.warn('[RECORDING] Pause failed:', error);
       }
     }
     
@@ -166,16 +169,16 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     }
 
     pauseStartTimeRef.current = Date.now();
-  }, [recorder]);
+  }, []);
 
   const resumeRecording = useCallback(async () => {
     if (Platform.OS !== 'web') {
       try {
-        if (recorder?.record) {
-          await recorder.record();
+        if (recorderRef.current) {
+          await recorderRef.current.startAsync();
         }
       } catch (error) {
-        console.warn('Recorder resume failed:', error);
+        console.warn('[RECORDING] Resume failed:', error);
       }
     }
     
@@ -188,7 +191,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     }
 
     intervalRef.current = setInterval(processAudioBuffer, 50);
-  }, [processAudioBuffer, recorder]);
+  }, [processAudioBuffer]);
 
   const calculateAverageMetrics = useCallback((): VoiceMetrics => {
     const samples = allSamplesRef.current;
@@ -225,9 +228,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
-      console.log('[SAVE DEBUG] 🛑 Stop recording called');
-      console.log('[SAVE DEBUG] Platform:', Platform.OS);
-      console.log('[SAVE DEBUG] Current duration:', duration);
+      console.log('[RECORDING] 🛑 Stop recording called');
+      console.log('[RECORDING] Platform:', Platform.OS);
+      console.log('[RECORDING] Current duration:', duration);
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -235,59 +238,53 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       }
 
       if (Platform.OS === 'web') {
-        console.log('[SAVE DEBUG] ⚠️ Web platform - no real audio to save');
+        console.log('[RECORDING] ⚠️ Web platform - no real audio to save');
         resetRecording();
         return null;
       }
 
-      console.log('[SAVE DEBUG] Recorder exists:', !!recorder);
-      console.log('[SAVE DEBUG] Recorder.stop exists:', !!recorder?.stop);
+      console.log('[RECORDING] Recorder exists:', !!recorderRef.current);
       
       let uri: string | null | undefined;
       
-      if (recorder?.stop) {
-        console.log('[SAVE DEBUG] Calling recorder.stop()...');
-        await recorder.stop();
-        console.log('[SAVE DEBUG] recorder.stop() completed');
-        
-        uri = recorder.uri;
-        console.log('[SAVE DEBUG] Recorder URI:', uri);
-        
-        if (uri) {
-          const { File } = await import('expo-file-system');
+      if (recorderRef.current) {
+        try {
+          console.log('[RECORDING] Stopping recording...');
+          await recorderRef.current.stopAndUnloadAsync();
+          uri = recorderRef.current.getURI();
+          console.log('[RECORDING] Recording stopped, URI:', uri);
           
-          try {
-            // First check if the file at recorder.uri actually exists and has content
+          if (uri) {
+            const { File } = await import('expo-file-system');
+            
             const recorderFile = new File(uri);
             const fileExists = recorderFile.exists;
             const fileSize = recorderFile.size || 0;
             
-            console.log('[SAVE DEBUG] File exists at recorder.uri:', fileExists);
-            console.log('[SAVE DEBUG] File size:', fileSize, 'bytes');
+            console.log('[RECORDING] File exists:', fileExists);
+            console.log('[RECORDING] File size:', fileSize, 'bytes');
             
-            if (fileExists && fileSize > 0) {
-              console.log('[SAVE DEBUG] ✅ Recording file is valid, using recorder.uri');
-              // File is good, keep using original URI
-            } else {
-              console.error('[SAVE DEBUG] ❌ File at recorder.uri is empty or missing');
-              console.log('[SAVE DEBUG] This is the known SDK 54 bug - file should exist but is zero-byte or missing');
+            if (!fileExists || fileSize === 0) {
+              console.error('[RECORDING] ❌ File is empty or missing');
               uri = null;
+            } else {
+              console.log('[RECORDING] ✅ Recording file is valid');
             }
-          } catch (checkError) {
-            console.error('[SAVE DEBUG] ❌ Error checking recording file:', checkError);
-            uri = null;
           }
+        } catch (stopError) {
+          console.error('[RECORDING] ❌ Error stopping recording:', stopError);
+          uri = null;
         }
       } else {
-        console.log('[SAVE DEBUG] ❌ Recorder or recorder.stop() not available');
+        console.log('[RECORDING] ❌ Recorder not available');
       }
 
       if (uri && duration > 0) {
         try {
-          console.log('[SAVE DEBUG] Starting save process...');
+          console.log('[RECORDING] Starting save process...');
           const recordingId = `recording_${startTimeRef.current}`;
           const savedUri = await saveAudioFile(uri, recordingId);
-          console.log('[SAVE DEBUG] Audio file saved to:', savedUri);
+          console.log('[RECORDING] Audio file saved to:', savedUri);
           
           const averageMetrics = calculateAverageMetrics();
           const recordingName = generateRecordingName(locationRef.current, startTimeRef.current);
@@ -307,18 +304,18 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             averageMetrics,
           });
 
-          console.log('[SAVE DEBUG] ✅ Recording saved successfully:', recordingName);
+          console.log('[RECORDING] ✅ Recording saved successfully:', recordingName);
         } catch (saveError) {
-          console.error('[SAVE DEBUG] ❌ Failed to save recording:', saveError);
+          console.error('[RECORDING] ❌ Failed to save recording:', saveError);
         }
       } else {
-        console.log('[SAVE DEBUG] ❌ Not saving - URI:', uri, 'Duration:', duration);
+        console.log('[RECORDING] ❌ Not saving - URI:', uri, 'Duration:', duration);
       }
 
       resetRecording();
       return uri || null;
     } catch (error) {
-      console.error('[SAVE DEBUG] ❌ Error in stopRecording:', error);
+      console.error('[RECORDING] ❌ Error in stopRecording:', error);
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -328,12 +325,16 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       resetRecording();
       return null;
     }
-  }, [recorder, duration, calculateAverageMetrics]);
+  }, [duration, calculateAverageMetrics]);
 
   const resetRecording = useCallback(() => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
       intervalRef.current = null;
+    }
+
+    if (recorderRef.current) {
+      recorderRef.current = null;
     }
 
     setRecordingState('idle');
