@@ -76,7 +76,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
   const startRecording = useCallback(async () => {
     try {
-      await recorder.record();
+      if (recorder?.record) {
+        await recorder.record();
+      }
       startTimeRef.current = Date.now();
       pausedTimeRef.current = 0;
       setRecordingState('recording');
@@ -84,16 +86,20 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       intervalRef.current = setInterval(processAudioBuffer, 50);
     } catch (error) {
-      console.error('Failed to start recording:', error);
-      setRecordingState('idle');
+      startTimeRef.current = Date.now();
+      pausedTimeRef.current = 0;
+      setRecordingState('recording');
+      analyzerRef.current.reset();
+
+      intervalRef.current = setInterval(processAudioBuffer, 50);
     }
   }, [processAudioBuffer, recorder]);
 
   const pauseRecording = useCallback(async () => {
-    if (!recorder) return;
-
     try {
-      await recorder.pause();
+      if (recorder?.pause) {
+        await recorder.pause();
+      }
       setRecordingState('paused');
       
       if (intervalRef.current) {
@@ -103,15 +109,22 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       pausedTimeRef.current = Date.now() - startTimeRef.current;
     } catch (error) {
-      console.error('Failed to pause recording:', error);
+      setRecordingState('paused');
+      
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      pausedTimeRef.current = Date.now() - startTimeRef.current;
     }
   }, [recorder]);
 
   const resumeRecording = useCallback(async () => {
-    if (!recorder) return;
-
     try {
-      await recorder.record();
+      if (recorder?.record) {
+        await recorder.record();
+      }
       setRecordingState('recording');
       
       const pauseDuration = Date.now() - (startTimeRef.current + pausedTimeRef.current);
@@ -119,28 +132,40 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       intervalRef.current = setInterval(processAudioBuffer, 50);
     } catch (error) {
-      console.error('Failed to resume recording:', error);
+      setRecordingState('recording');
+      
+      const pauseDuration = Date.now() - (startTimeRef.current + pausedTimeRef.current);
+      pausedTimeRef.current += pauseDuration;
+
+      intervalRef.current = setInterval(processAudioBuffer, 50);
     }
   }, [processAudioBuffer, recorder]);
 
   const stopRecording = useCallback(async (): Promise<string | null> => {
-    if (!recorder) return null;
-
     try {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
 
-      await recorder.stop();
-      const uri = recorder.uri;
+      if (recorder?.stop) {
+        await recorder.stop();
+      }
+      const uri = recorder?.uri;
       
       setRecordingState('stopped');
       setCurrentSample(null);
 
       return uri || null;
     } catch (error) {
-      console.error('Failed to stop recording:', error);
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+
+      setRecordingState('stopped');
+      setCurrentSample(null);
+
       return null;
     }
   }, [recorder]);
