@@ -28,13 +28,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const startTimeRef = useRef<number>(0);
   const pausedTimeRef = useRef<number>(0);
 
-  const processAudioBuffer = useCallback(async () => {
-    if (!recorder) return;
-
+  const processAudioBuffer = useCallback(() => {
     try {
-      const uri = recorder.uri;
-      if (!uri) return;
-
       const features: AudioFeatures = {
         spectralCentroid: 2000 + Math.random() * 1000,
         spectralFlatness: 0.3 + Math.random() * 0.4,
@@ -72,7 +67,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     } catch (error) {
       console.error('Error processing audio:', error);
     }
-  }, [recorder]);
+  }, []);
 
   const startRecording = useCallback(async () => {
     try {

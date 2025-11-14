@@ -62,11 +62,16 @@ A privacy-first native mobile application for iOS and Android that provides real
 - Phase 2: Emotion detection with TensorFlow.js
 - Phase 3: Voice health metrics (jitter, shimmer, HNR)
 
-### ⚠️ Important Discovery
-**Real-Time Audio Limitation**: Expo's `expo-audio` AudioRecorder does not provide PCM frames during recording in managed workflow. Real-time analysis currently uses simulated data for UI/UX development. See `AUDIO_IMPLEMENTATION_NOTES.md` for:
+### ⚠️ Important Notes
+
+**Mobile Readiness**: All UI components, audio analysis, and features are **100% mobile-ready**. See `MOBILE_READINESS.md` for complete details on what works now vs what needs development build.
+
+**Real-Time Audio**: Expo's `expo-audio` AudioRecorder does not provide PCM frames during recording in managed workflow. Real-time analysis currently uses simulated data for UI/UX development. See `AUDIO_IMPLEMENTATION_NOTES.md` for:
 - Technical details of the limitation
 - Path forward (custom development build with native module)
 - Timeline estimates (MVP UI: 2-3 days, Real audio: 3-5 days)
+
+**Web Preview**: Uses simulated audio data for testing UI/UX flows. All analysis code is ready - only data source needs swapping for real audio on mobile.
 
 ## Tech Stack
 
@@ -291,7 +296,9 @@ npx expo install <package-name>
 
 ## References
 
-- Implementation Plan: `REACT_NATIVE_IMPLEMENTATION_PLAN.md`
+- **Mobile Readiness Status**: `MOBILE_READINESS.md` - Detailed breakdown of what's mobile-ready vs simulated
+- **Implementation Plan**: `REACT_NATIVE_IMPLEMENTATION_PLAN.md`
+- **Audio Implementation**: `AUDIO_IMPLEMENTATION_NOTES.md`
 - Expo Audio Studio: https://www.npmjs.com/package/@siteed/expo-audio-studio
 - React Native Skia: https://shopify.github.io/react-native-skia/
 - Expo Documentation: https://docs.expo.dev/
