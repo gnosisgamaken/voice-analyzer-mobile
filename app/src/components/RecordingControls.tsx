@@ -1,9 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
-import ReactNativeHapticFeedback, { HapticFeedbackTypes } from 'react-native-haptic-feedback';
+import type { HapticFeedbackTypes } from 'react-native-haptic-feedback';
 import { RecordingState } from '../types';
 import { formatTime } from '../utils/formatting';
 import { COLORS, TYPOGRAPHY } from '../constants';
+import { triggerHaptic } from '../utils/haptics';
 
 interface RecordingControlsProps {
   recordingState: RecordingState;
@@ -48,34 +49,23 @@ export default function RecordingControls({
     return () => animation?.stop();
   }, [pulse, recordingState]);
 
-  const triggerHaptic = async (style: HapticFeedbackTypes) => {
-    try {
-      ReactNativeHapticFeedback.trigger(style, {
-        enableVibrateFallback: true,
-        ignoreAndroidSystemSettings: false,
-      });
-    } catch {
-      // Best effort
-    }
-  };
-
   const handleStart = async () => {
-    await triggerHaptic('impactMedium' as HapticFeedbackTypes);
+    triggerHaptic('impactMedium' as HapticFeedbackTypes);
     onStart();
   };
 
   const handlePause = async () => {
-    await triggerHaptic('impactLight' as HapticFeedbackTypes);
+    triggerHaptic('impactLight' as HapticFeedbackTypes);
     onPause();
   };
 
   const handleResume = async () => {
-    await triggerHaptic('impactMedium' as HapticFeedbackTypes);
+    triggerHaptic('impactMedium' as HapticFeedbackTypes);
     onResume();
   };
 
   const handleStop = async () => {
-    await triggerHaptic('notificationSuccess' as HapticFeedbackTypes);
+    triggerHaptic('notificationSuccess' as HapticFeedbackTypes);
     onStop();
   };
 

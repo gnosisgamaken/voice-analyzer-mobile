@@ -90,6 +90,7 @@
 - ✅ Audio recording (start/pause/resume/stop) with expo-audio
 - ✅ Recording state management
 - ✅ Duration tracking across pause cycles
+- ✅ JS bridge for future native PCM streaming (`src/native/pcmStreamer.ts`) that feeds `useAudioRecorder`
 - ✅ FFT-based spectral feature extraction
 - ✅ Voice metrics calculations (brightness, clarity, richness, energy, pitch stability)
 - ✅ Pitch detection algorithm (autocorrelation)
@@ -99,6 +100,7 @@
 - ⚠️ Real-time voice metrics (random values in realistic ranges)
 - ⚠️ Pitch detection (random 150-300 Hz)
 - ⚠️ Spectral features (random but realistic values)
+- ⚠️ The PCM bridge falls back to simulated data until the native `VoicePCMStreamer` module is shipped
 
 ### Ready for Real Audio
 When PCM frames become available, simply replace the mock data in `processAudioBuffer()`:

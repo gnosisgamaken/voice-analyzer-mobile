@@ -8,6 +8,7 @@ import AudioRecorderPlayer, {
   AVEncodingOption,
   AVLinearPCMBitDepthKeyIOSType,
   AudioSet,
+  OutputFormatAndroidType,
 } from 'react-native-audio-recorder-player';
 import RNFS from 'react-native-fs';
 import {
@@ -28,10 +29,15 @@ import { analyzeVoiceHealth } from '../utils/voiceHealthMetrics';
 import { analyzeFluency } from '../utils/speechFluency';
 import { analyzeRecordingFile } from '../utils/audioFileAnalysis';
 import { computeAverageVoiceMetrics, computeAverageBrandedMetrics } from '../utils/metricsAggregation';
+import { startPCMStreaming } from '../native/pcmStreamer';
 
 const RECORDING_AUDIO_SET: AudioSet = {
-  AudioEncoderAndroid: AudioEncoderAndroidType.AAC,
+  AudioEncoderAndroid: AudioEncoderAndroidType.OPUS,
   AudioSourceAndroid: AudioSourceAndroidType.MIC,
+  OutputFormatAndroid: OutputFormatAndroidType.WEBM,
+  AudioEncodingBitRateAndroid: 128000,
+  AudioSamplingRateAndroid: 44100,
+  AudioChannelsAndroid: 1,
   AVEncoderAudioQualityKeyIOS: AVEncoderAudioQualityIOSType.high,
   AVFormatIDKeyIOS: AVEncodingOption.wav,
   AVLinearPCMBitDepthKeyIOS: AVLinearPCMBitDepthKeyIOSType.bit16,
@@ -44,10 +50,46 @@ const RECORDING_AUDIO_SET: AudioSet = {
 
 const WAV_HEADER_BYTES = 44;
 const PCM_BYTES_PER_SAMPLE = 2;
+const STREAMING_FRAME_MS = 20;
+const STREAMING_FRAME_SAMPLES = Math.max(
+  256,
+  Math.round((AUDIO_CONFIG.sampleRate * STREAMING_FRAME_MS) / 1000),
+);
+const WAV_CHANNELS = 1;
+const WAV_BITS_PER_SAMPLE = 16;
+const PCM_NORMALIZATION = 32767;
 
-// NOTE: Real-time audio analysis is currently simulated
-// Real PCM audio streaming requires a custom native module
-// See AUDIO_IMPLEMENTATION_NOTES.md for details
+const createWavHeader = (pcmBytes: number, sampleRate: number): Buffer => {
+  const buffer = Buffer.alloc(WAV_HEADER_BYTES);
+  buffer.write('RIFF', 0);
+  buffer.writeUInt32LE(pcmBytes + 36, 4);
+  buffer.write('WAVE', 8);
+  buffer.write('fmt ', 12);
+  buffer.writeUInt32LE(16, 16);
+  buffer.writeUInt16LE(1, 20);
+  buffer.writeUInt16LE(WAV_CHANNELS, 22);
+  buffer.writeUInt32LE(sampleRate, 24);
+  const byteRate = sampleRate * WAV_CHANNELS * (WAV_BITS_PER_SAMPLE / 8);
+  buffer.writeUInt32LE(byteRate, 28);
+  const blockAlign = WAV_CHANNELS * (WAV_BITS_PER_SAMPLE / 8);
+  buffer.writeUInt16LE(blockAlign, 32);
+  buffer.writeUInt16LE(WAV_BITS_PER_SAMPLE, 34);
+  buffer.write('data', 36);
+  buffer.writeUInt32LE(pcmBytes, 40);
+  return buffer;
+};
+
+const floatSamplesToPCMBuffer = (samples: Float32Array): Buffer => {
+  const buffer = Buffer.alloc(samples.length * PCM_BYTES_PER_SAMPLE);
+  for (let i = 0; i < samples.length; i++) {
+    const clamped = Math.max(-1, Math.min(1, samples[i]));
+    buffer.writeInt16LE(Math.round(clamped * PCM_NORMALIZATION), i * PCM_BYTES_PER_SAMPLE);
+  }
+  return buffer;
+};
+
+// NOTE: Real-time audio analysis uses the native PCM streaming module when available.
+// Web (and native fallback) continue to simulate data per AUDIO_IMPLEMENTATION_NOTES.md.
 
 export interface UseAudioRecorderReturn {
   recordingState: RecordingState;
@@ -79,6 +121,13 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const pitchHistoryRef = useRef<number[]>([]);
   const amplitudeHistoryRef = useRef<number[]>([]);
   const energyHistoryRef = useRef<number[]>([]);
+  const streamingStopperRef = useRef<(() => Promise<void> | void) | null>(null);
+  const streamingWindowRef = useRef<Float32Array>(new Float32Array(AUDIO_CONFIG.fftSize));
+  const streamingFilePathRef = useRef<string | null>(null);
+  const streamingBytesWrittenRef = useRef(0);
+  const streamingWriteQueueRef = useRef<Buffer[]>([]);
+  const streamingWriteInFlightRef = useRef(false);
+  const streamingSessionActiveRef = useRef(false);
 
   const getRecorder = (): AudioRecorderPlayer => {
     if (!recorderRef.current) {
@@ -221,16 +270,19 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
               spectrum: analysisResult.spectrum,
             },
             processingStatus: 'ready',
+            processingError: undefined,
           });
         } else {
           await updateRecordingMetadata(recordingId, {
-            processingStatus: 'ready',
+            processingStatus: 'error',
+            processingError: 'Unsupported audio format for analysis',
           });
         }
       } catch (error) {
         logger.error('Background analysis failed:', error);
         await updateRecordingMetadata(recordingId, {
-          processingStatus: 'ready',
+          processingStatus: 'error',
+          processingError: 'Analysis pipeline failed',
         });
       }
     },
@@ -251,6 +303,208 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     const pitchHz = 150 + Math.random() * 150;
     ingestFeatures(features, pitchHz);
   }, [ingestFeatures]);
+
+  const processStreamingQueue = useCallback(() => {
+    if (streamingWriteInFlightRef.current) {
+      return;
+    }
+    if (!streamingFilePathRef.current || streamingWriteQueueRef.current.length === 0) {
+      return;
+    }
+
+    streamingWriteInFlightRef.current = true;
+    (async () => {
+      try {
+        while (streamingWriteQueueRef.current.length && streamingFilePathRef.current) {
+          const chunk = streamingWriteQueueRef.current.shift();
+          if (!chunk) {
+            continue;
+          }
+          await RNFS.appendFile(
+            streamingFilePathRef.current,
+            chunk.toString('base64'),
+            'base64',
+          );
+          streamingBytesWrittenRef.current += chunk.length;
+        }
+      } catch (error) {
+        logger.warn('Failed to persist streaming PCM chunk:', error);
+      } finally {
+        streamingWriteInFlightRef.current = false;
+        if (streamingWriteQueueRef.current.length) {
+          setTimeout(() => {
+            processStreamingQueue();
+          }, 0);
+        }
+      }
+    })();
+  }, []);
+
+  const waitForStreamingWrites = useCallback(async () => {
+    while (
+      streamingWriteInFlightRef.current ||
+      streamingWriteQueueRef.current.length > 0
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+  }, []);
+
+  const appendStreamingSamples = useCallback(
+    (samples: Float32Array) => {
+      if (!streamingFilePathRef.current || samples.length === 0) {
+        return;
+      }
+      const buffer = floatSamplesToPCMBuffer(samples);
+      streamingWriteQueueRef.current.push(buffer);
+      processStreamingQueue();
+    },
+    [processStreamingQueue],
+  );
+
+  const ensureStreamingFile = useCallback(async () => {
+    if (streamingFilePathRef.current) {
+      return;
+    }
+    const timestamp = recordingStartTimeRef.current || Date.now();
+    const path = `${RNFS.DocumentDirectoryPath}/live_stream_${timestamp}.wav`;
+    try {
+      const header = createWavHeader(0, AUDIO_CONFIG.sampleRate);
+      await RNFS.writeFile(path, header.toString('base64'), 'base64');
+      streamingFilePathRef.current = path;
+      streamingBytesWrittenRef.current = 0;
+      streamingWriteQueueRef.current = [];
+      streamingWriteInFlightRef.current = false;
+      logger.debug('Initialized PCM streaming file:', path);
+    } catch (error) {
+      streamingFilePathRef.current = null;
+      logger.warn('Unable to prepare streaming file:', error);
+    }
+  }, []);
+
+  const discardStreamingFile = useCallback(async () => {
+    const path = streamingFilePathRef.current;
+    streamingFilePathRef.current = null;
+    streamingBytesWrittenRef.current = 0;
+    streamingWriteQueueRef.current = [];
+    streamingWriteInFlightRef.current = false;
+    if (path) {
+      try {
+        await waitForStreamingWrites();
+        const exists = await RNFS.exists(path);
+        if (exists) {
+          await RNFS.unlink(path);
+        }
+      } catch (error) {
+        logger.debug('Streaming file cleanup skipped:', error);
+      }
+    }
+  }, [waitForStreamingWrites]);
+
+  const finalizeStreamingFile = useCallback(async (): Promise<string | null> => {
+    if (!streamingFilePathRef.current) {
+      return null;
+    }
+
+    await waitForStreamingWrites();
+    const pcmBytes = streamingBytesWrittenRef.current;
+    if (pcmBytes <= 0) {
+      await discardStreamingFile();
+      return null;
+    }
+
+    try {
+      const header = createWavHeader(pcmBytes, AUDIO_CONFIG.sampleRate);
+      await RNFS.write(
+        streamingFilePathRef.current,
+        header.toString('base64'),
+        0,
+        'base64',
+      );
+      const finalizedPath = streamingFilePathRef.current;
+      streamingFilePathRef.current = null;
+      streamingBytesWrittenRef.current = 0;
+      streamingWriteQueueRef.current = [];
+      streamingWriteInFlightRef.current = false;
+      return finalizedPath.startsWith('file://')
+        ? finalizedPath
+        : `file://${finalizedPath}`;
+    } catch (error) {
+      logger.warn('Failed to finalize streaming WAV header:', error);
+      await discardStreamingFile();
+      return null;
+    }
+  }, [discardStreamingFile, waitForStreamingWrites]);
+
+  const handleStreamingFrame = useCallback(
+    ({ samples, sampleRate }: { samples: Float32Array; sampleRate: number }) => {
+      const frameLength = samples.length;
+      if (!frameLength) {
+        return;
+      }
+
+      appendStreamingSamples(samples);
+
+      const window = streamingWindowRef.current;
+      if (frameLength >= window.length) {
+        window.set(samples.subarray(frameLength - window.length));
+      } else {
+        window.copyWithin(0, frameLength);
+        window.set(samples, window.length - frameLength);
+      }
+
+      const features = analyzerRef.current.extractFeatures(window);
+      const pitchHz = autoCorrelatePitch(window, sampleRate);
+      ingestFeatures(features, pitchHz);
+    },
+    [appendStreamingSamples, ingestFeatures],
+  );
+
+  const stopStreaming = useCallback(async () => {
+    if (!streamingStopperRef.current) {
+      return;
+    }
+    const cleanup = streamingStopperRef.current;
+    streamingStopperRef.current = null;
+    try {
+      const result = cleanup();
+      if (result instanceof Promise) {
+        await result;
+      }
+    } catch (error) {
+      logger.warn('PCM streaming cleanup failed:', error);
+    }
+  }, []);
+
+  const startRealtimeStreaming = useCallback(async (): Promise<boolean> => {
+    if (Platform.OS === 'web') {
+      return false;
+    }
+
+    if (streamingStopperRef.current) {
+      return true;
+    }
+
+    streamingWindowRef.current.fill(0);
+    logger.debug('Attempting to start native PCM streaming…');
+
+    try {
+      const cleanup = await startPCMStreaming(handleStreamingFrame, {
+        sampleRate: AUDIO_CONFIG.sampleRate,
+        frameSize: STREAMING_FRAME_SAMPLES,
+      });
+      if (cleanup) {
+        streamingStopperRef.current = cleanup;
+        await ensureStreamingFile();
+        logger.info('Native PCM streaming active');
+        return true;
+      }
+    } catch (error) {
+      logger.warn('Unable to start native PCM streaming; falling back:', error);
+    }
+
+    await discardStreamingFile();
+    return false;
+  }, [discardStreamingFile, ensureStreamingFile, handleStreamingFrame]);
 
   const processAudioBuffer = useCallback(() => {
     if (Platform.OS === 'web' || !recordingFileRef.current) {
@@ -282,10 +536,32 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       });
   }, [ingestFeatures, readLatestFrame, simulateFeatures]);
 
+  const stopAnalysisLoop = useCallback(async () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+      logger.debug('Cleared polling analysis interval');
+    }
+    await stopStreaming();
+    await waitForStreamingWrites();
+  }, [stopStreaming, waitForStreamingWrites]);
+
+  const startAnalysisLoop = useCallback(() => {
+    if (intervalRef.current) {
+      logger.debug('Polling analysis loop already running');
+      return;
+    }
+    intervalRef.current = setInterval(processAudioBuffer, AUDIO_CONFIG.analysisInterval);
+    logger.debug('Started polling analysis loop');
+  }, [processAudioBuffer]);
+
   const startRecording = useCallback(async () => {
     try {
       logger.debug('Start recording called');
-      
+      streamingSessionActiveRef.current = false;
+      await stopAnalysisLoop();
+      await discardStreamingFile();
+
       if (Platform.OS === 'web') {
         logger.debug('Web platform - recording simulation only');
         setRecordingState('recording');
@@ -294,10 +570,10 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         pauseStartTimeRef.current = 0;
         allSamplesRef.current = [];
         analyzerRef.current.reset();
-        intervalRef.current = setInterval(processAudioBuffer, AUDIO_CONFIG.analysisInterval);
+        startAnalysisLoop();
         return;
       }
-      
+
       const hasPermission = await ensureAudioPermission();
       if (!hasPermission) {
         logger.error('Audio permission denied');
@@ -313,47 +589,56 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           status.canAskAgain
             ? 'Microphone access is required to record audio. Please accept the upcoming permission prompt.'
             : 'Microphone access is blocked. Enable it in Settings → Privacy → Microphone for Voice Analyzer.',
-          actions
+          actions,
         );
         return;
       }
       logger.info('Audio permission granted');
-      
+
       await initializeStorage();
       locationRef.current = await getCurrentLocation();
       logger.debug('Location:', locationRef.current?.formattedAddress || 'none');
-      
+
       startTimeRef.current = Date.now();
       recordingStartTimeRef.current = Date.now();
       totalPausedDurationRef.current = 0;
       pauseStartTimeRef.current = 0;
       allSamplesRef.current = [];
       analyzerRef.current.reset();
-      
-      const recorder = getRecorder();
-      const timestamp = Date.now();
-      const documentPath = `${RNFS.DocumentDirectoryPath}/temp_voice_${timestamp}.wav`;
-      const filePath = Platform.OS === 'ios'
-        ? `file://${documentPath}`
-        : documentPath;
-      recordingFileRef.current = filePath;
+      recordingFileRef.current = null;
 
-      try {
-        await recorder.startRecorder(filePath, RECORDING_AUDIO_SET);
-        logger.info('Recording started successfully at', filePath);
-      } catch (recordError) {
-        logger.error('Failed to start recording:', recordError);
-        recordingFileRef.current = null;
-        throw recordError;
+      const streamingActive = await startRealtimeStreaming();
+      streamingSessionActiveRef.current = streamingActive;
+      logger.debug(`PCM streaming availability: ${streamingActive ? 'active' : 'unavailable'}`);
+
+      if (!streamingActive) {
+        const recorder = getRecorder();
+        const timestamp = Date.now();
+        const documentPath = `${RNFS.DocumentDirectoryPath}/temp_voice_${timestamp}.wav`;
+        const filePath = Platform.OS === 'ios' ? `file://${documentPath}` : documentPath;
+        recordingFileRef.current = filePath;
+
+        try {
+          await recorder.startRecorder(filePath, RECORDING_AUDIO_SET);
+          logger.info('Fallback recorder started at', filePath);
+        } catch (recordError) {
+          logger.error('Failed to start recording:', recordError);
+          recordingFileRef.current = null;
+          throw recordError;
+        }
+
+        startAnalysisLoop();
       }
-      
+
       setRecordingState('recording');
-      intervalRef.current = setInterval(processAudioBuffer, AUDIO_CONFIG.analysisInterval);
+      logger.info('Recording session entered recording state');
     } catch (error) {
       logger.error('Failed to start recording:', error);
+      streamingSessionActiveRef.current = false;
+      await stopAnalysisLoop();
       setRecordingState('idle');
     }
-  }, [processAudioBuffer]);
+  }, [discardStreamingFile, startAnalysisLoop, startRealtimeStreaming, stopAnalysisLoop]);
 
   const pauseRecording = useCallback(async () => {
     if (Platform.OS !== 'web') {
@@ -365,16 +650,12 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         logger.warn('Pause failed:', error);
       }
     }
-    
-    setRecordingState('paused');
-    
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
 
+    setRecordingState('paused');
+    await stopAnalysisLoop();
     pauseStartTimeRef.current = Date.now();
-  }, []);
+    logger.debug('Recording paused');
+  }, [stopAnalysisLoop]);
 
   const resumeRecording = useCallback(async () => {
     if (Platform.OS !== 'web') {
@@ -386,17 +667,60 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         logger.warn('Resume failed:', error);
       }
     }
-    
+
     setRecordingState('recording');
-    
+
     if (pauseStartTimeRef.current > 0) {
       const pauseDuration = Date.now() - pauseStartTimeRef.current;
       totalPausedDurationRef.current += pauseDuration;
       pauseStartTimeRef.current = 0;
     }
 
-      intervalRef.current = setInterval(processAudioBuffer, AUDIO_CONFIG.analysisInterval);
-  }, [processAudioBuffer]);
+    if (Platform.OS === 'web') {
+      startAnalysisLoop();
+      return;
+    }
+
+    if (streamingSessionActiveRef.current) {
+      const streamingActive = await startRealtimeStreaming();
+      if (!streamingActive) {
+        logger.warn('PCM streaming unavailable on resume, falling back to polling');
+        startAnalysisLoop();
+      } else {
+        logger.debug('PCM streaming re-established after resume');
+      }
+      return;
+    }
+
+    startAnalysisLoop();
+    logger.debug('Recording resumed using polling');
+  }, [startAnalysisLoop, startRealtimeStreaming]);
+
+  const resetRecording = useCallback(() => {
+    streamingSessionActiveRef.current = false;
+    void stopAnalysisLoop();
+    void discardStreamingFile();
+
+    if (recorderRef.current) {
+      recorderRef.current = null;
+    }
+
+    recordingFileRef.current = null;
+
+    setRecordingState('idle');
+    setCurrentSample(null);
+    setDuration(0);
+    startTimeRef.current = 0;
+    totalPausedDurationRef.current = 0;
+    pauseStartTimeRef.current = 0;
+    locationRef.current = null;
+    allSamplesRef.current = [];
+    analyzerRef.current.reset();
+    pitchHistoryRef.current = [];
+    amplitudeHistoryRef.current = [];
+    energyHistoryRef.current = [];
+    logger.debug('Recorder state cleared to idle');
+  }, [discardStreamingFile, stopAnalysisLoop]);
 
   const calculateAverageMetrics = useCallback((): VoiceMetrics => {
     return computeAverageVoiceMetrics(allSamplesRef.current);
@@ -409,10 +733,10 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
   const stopRecording = useCallback(async (): Promise<string | null> => {
     try {
       logger.debug('Stop recording called');
-      
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+      await stopAnalysisLoop();
+      const streamingUri = await finalizeStreamingFile();
+      if (streamingUri) {
+        logger.debug('Streaming session produced WAV at', streamingUri);
       }
 
       if (Platform.OS === 'web') {
@@ -421,18 +745,19 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         return null;
       }
 
-      let uri: string | null = null;
-      
+      let uri: string | null = streamingUri ?? null;
+
       if (recorderRef.current) {
         try {
           const recorder = recorderRef.current;
           const resultPath = await recorder.stopRecorder();
           recorder.removeRecordBackListener();
-          uri = recordingFileRef.current || resultPath || null;
+          if (!uri) {
+            uri = recordingFileRef.current || resultPath || null;
+          }
           logger.debug('Recording stopped, URI:', uri);
         } catch (stopError) {
           logger.error('Error stopping recording:', stopError);
-          uri = null;
         }
       } else {
         logger.warn('Recorder not available');
@@ -494,6 +819,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             averageMetrics,
             averageBrandedMetrics,
             processingStatus: 'processing',
+            processingError: undefined,
           });
 
           setTimeout(() => {
@@ -509,45 +835,25 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       }
 
       resetRecording();
+      logger.info('Recording session reset complete');
       return finalUri;
     } catch (error) {
       logger.error('Error in stopRecording:', error);
-      
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-
+      await stopAnalysisLoop();
+      await discardStreamingFile();
       resetRecording();
       return null;
     }
-  }, [duration, calculateAverageMetrics, calculateAverageBrandedMetrics, processRecordingAnalysis]);
-
-  const resetRecording = useCallback(() => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
-    if (recorderRef.current) {
-      recorderRef.current = null;
-    }
-
-    recordingFileRef.current = null;
-
-    setRecordingState('idle');
-    setCurrentSample(null);
-    setDuration(0);
-    startTimeRef.current = 0;
-    totalPausedDurationRef.current = 0;
-    pauseStartTimeRef.current = 0;
-    locationRef.current = null;
-    allSamplesRef.current = [];
-    analyzerRef.current.reset();
-    pitchHistoryRef.current = [];
-    amplitudeHistoryRef.current = [];
-    energyHistoryRef.current = [];
-  }, []);
+  }, [
+    duration,
+    calculateAverageMetrics,
+    calculateAverageBrandedMetrics,
+    processRecordingAnalysis,
+    finalizeStreamingFile,
+    discardStreamingFile,
+    resetRecording,
+    stopAnalysisLoop,
+  ]);
 
   return {
     recordingState,

@@ -82,6 +82,7 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
     }
 
     try {
+      logger.debug('Loading audio into player:', uri);
       stopProgressUpdates();
       const player = getPlayer();
       await player.stopPlayer().catch(() => undefined);
@@ -124,6 +125,7 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
     }
 
     try {
+      logger.debug('Starting playback for', loadedUriRef.current);
       const player = getPlayer();
       stopProgressUpdates();
       const path = stripFileScheme(loadedUriRef.current);
@@ -146,10 +148,11 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
       await playerRef.current.pausePlayer();
       stopProgressUpdates();
       setPlaybackState('paused');
+      logger.debug('Playback paused at', position);
     } catch (error) {
       logger.error('Error pausing audio:', error);
     }
-  }, [isLoaded, stopProgressUpdates]);
+  }, [isLoaded, position, stopProgressUpdates]);
 
   const stop = useCallback(async () => {
     if (Platform.OS === 'web' || !playerRef.current || !isLoaded) {
@@ -161,6 +164,7 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
       stopProgressUpdates();
       setPlaybackState('stopped');
       setPosition(0);
+      logger.debug('Playback stopped');
     } catch (error) {
       logger.error('Error stopping audio:', error);
     }
@@ -174,6 +178,7 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
     try {
       await playerRef.current.seekToPlayer(positionMs);
       setPosition(positionMs);
+      logger.debug('Playback seeked to', positionMs);
     } catch (error) {
       logger.error('Error seeking audio:', error);
     }

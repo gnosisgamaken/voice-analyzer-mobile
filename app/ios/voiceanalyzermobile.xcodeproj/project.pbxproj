@@ -11,6 +11,7 @@
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
 		6AFD94740D0B031F4C7AEE6F /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 10267BB334F6325892D59C3A /* PrivacyInfo.xcprivacy */; };
 		6CF52B0978EB54F0F805348F /* libPods-voiceanalyzermobile.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7F340F4F89EFAE055FADB280 /* libPods-voiceanalyzermobile.a */; };
+		D3C5F89E2F9A64D800B2845C /* VoicePCMStreamer.m in Sources */ = {isa = PBXBuildFile; fileRef = D3C5F89D2F9A64D800B2845C /* VoicePCMStreamer.m */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
 /* End PBXBuildFile section */
 
@@ -22,6 +23,7 @@
 		7F340F4F89EFAE055FADB280 /* libPods-voiceanalyzermobile.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-voiceanalyzermobile.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8570D1895906C8548CEA1CEB /* Pods-voiceanalyzermobile.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-voiceanalyzermobile.release.xcconfig"; path = "Target Support Files/Pods-voiceanalyzermobile/Pods-voiceanalyzermobile.release.xcconfig"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = voiceanalyzermobile/SplashScreen.storyboard; sourceTree = "<group>"; };
+		D3C5F89D2F9A64D800B2845C /* VoicePCMStreamer.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = VoicePCMStreamer.m; path = voiceanalyzermobile/VoicePCMStreamer.m; sourceTree = "<group>"; };
 		E8849D3F3718FF01066DC1B1 /* Pods-voiceanalyzermobile.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-voiceanalyzermobile.debug.xcconfig"; path = "Target Support Files/Pods-voiceanalyzermobile/Pods-voiceanalyzermobile.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = voiceanalyzermobile/AppDelegate.swift; sourceTree = "<group>"; };
@@ -44,6 +46,7 @@
 			isa = PBXGroup;
 			children = (
 				F11748412D0307B40044C1D9 /* AppDelegate.swift */,
+				D3C5F89D2F9A64D800B2845C /* VoicePCMStreamer.m */,
 				F11748442D0722820044C1D9 /* voiceanalyzermobile-Bridging-Header.h */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
@@ -263,6 +266,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D3C5F89E2F9A64D800B2845C /* VoicePCMStreamer.m in Sources */,
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
