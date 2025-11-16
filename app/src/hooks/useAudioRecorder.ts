@@ -30,6 +30,7 @@ import { analyzeFluency } from '../utils/speechFluency';
 import { analyzeRecordingFile } from '../utils/audioFileAnalysis';
 import { computeAverageVoiceMetrics, computeAverageBrandedMetrics } from '../utils/metricsAggregation';
 import { startPCMStreaming } from '../native/pcmStreamer';
+import { calculateBrandedMetrics } from '../utils/brandedMetricsEngine';
 
 const RECORDING_AUDIO_SET: AudioSet = {
   AudioEncoderAndroid: AudioEncoderAndroidType.OPUS,
@@ -184,6 +185,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     };
 
     const brandedMetrics = calculateBrandedVoiceMetrics(features, advancedFeatures);
+    
+    // Calculate new branded metrics from voice metrics
+    const newBrandedMetrics = calculateBrandedMetrics(metrics);
 
     const sample: VoiceSample = {
       timestamp: Date.now(),
@@ -199,6 +203,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       },
       voiceMetrics: metrics,
       brandedMetrics,
+      newBrandedMetrics,
     };
 
     setCurrentSample(sample);

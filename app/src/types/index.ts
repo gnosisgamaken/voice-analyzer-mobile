@@ -1,4 +1,5 @@
-import type { BrandedMetrics } from '../utils/VoiceMetricsEngine';
+import type { BrandedMetrics as LegacyBrandedMetrics } from '../utils/VoiceMetricsEngine';
+import type { BrandedMetrics as NewBrandedMetrics } from '../utils/brandedMetricsEngine';
 
 export interface VoiceSample {
   timestamp: number;
@@ -14,7 +15,8 @@ export interface VoiceSample {
     zcr: number;
   };
   voiceMetrics?: VoiceMetrics;
-  brandedMetrics?: BrandedMetrics;
+  brandedMetrics?: LegacyBrandedMetrics;
+  newBrandedMetrics?: NewBrandedMetrics;
 }
 
 export interface VoiceMetrics {
@@ -54,6 +56,7 @@ export interface StoredRecording {
     formattedAddress?: string;
   };
   averageMetrics: VoiceMetrics;
-  averageBrandedMetrics?: BrandedMetrics;
+  averageBrandedMetrics?: LegacyBrandedMetrics;
+  newAverageBrandedMetrics?: NewBrandedMetrics;
   analysis?: RecordingAnalysis;
 }

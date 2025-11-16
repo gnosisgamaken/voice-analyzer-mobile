@@ -13,6 +13,7 @@ import WaveformView from '../components/WaveformView';
 import RecordingControls from '../components/RecordingControls';
 import VoiceMetrics from '../components/VoiceMetrics';
 import { BrandedMetricsOverview } from '../components/BrandedMetricsOverview';
+import { BrandedMetricCard, VoiceIQDisplay } from '../components/BrandedMetricCard';
 import { VoiceSample } from '../types';
 import type { NavigationProp } from '../navigation/SimpleNavigator';
 import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
@@ -135,13 +136,57 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
             onStop={stopRecording}
           />
 
+          {/* New Branded Metrics Display */}
+          {currentSample?.newBrandedMetrics && (
+            <View style={styles.section}>
+              <Text style={styles.sectionHeader}>Voice IQ™</Text>
+              <VoiceIQDisplay 
+                score={currentSample.newBrandedMetrics.voiceIQ}
+                style={styles.voiceIQCard}
+              />
+            </View>
+          )}
+
+          {currentSample?.newBrandedMetrics && (
+            <View style={styles.section}>
+              <Text style={styles.sectionHeader}>Vocal Metrics</Text>
+              <View style={styles.metricsGrid}>
+                <BrandedMetricCard
+                  metricName="clarity"
+                  score={currentSample.newBrandedMetrics.clarity}
+                />
+                <BrandedMetricCard
+                  metricName="power"
+                  score={currentSample.newBrandedMetrics.power}
+                />
+                <BrandedMetricCard
+                  metricName="health"
+                  score={currentSample.newBrandedMetrics.health}
+                />
+                <BrandedMetricCard
+                  metricName="warmth"
+                  score={currentSample.newBrandedMetrics.warmth}
+                />
+                <BrandedMetricCard
+                  metricName="confidence"
+                  score={currentSample.newBrandedMetrics.confidence}
+                />
+                <BrandedMetricCard
+                  metricName="expressiveness"
+                  score={currentSample.newBrandedMetrics.expressiveness}
+                />
+              </View>
+            </View>
+          )}
+
+          {/* Legacy Metrics for Comparison */}
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Voice IQ & Branded Metrics</Text>
+            <Text style={styles.sectionHeader}>Legacy Voice IQ & Branded Metrics</Text>
             <BrandedMetricsOverview metrics={currentSample?.brandedMetrics} />
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Voice Metrics</Text>
+            <Text style={styles.sectionHeader}>Raw Voice Metrics</Text>
             <VoiceMetrics metrics={currentSample?.voiceMetrics || null} />
           </View>
         </ScrollView>
@@ -247,6 +292,13 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...TYPOGRAPHY.title2,
     color: COLORS.label,
+    paddingHorizontal: SPACING.md,
+  },
+  voiceIQCard: {
+    marginHorizontal: SPACING.md,
+  },
+  metricsGrid: {
+    gap: SPACING.md,
     paddingHorizontal: SPACING.md,
   },
 });

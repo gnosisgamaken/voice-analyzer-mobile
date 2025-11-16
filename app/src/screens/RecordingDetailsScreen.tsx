@@ -4,6 +4,8 @@ import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import PlaybackControls from '../components/PlaybackControls';
 import VoiceMetrics from '../components/VoiceMetrics';
 import { BrandedMetricsOverview } from '../components/BrandedMetricsOverview';
+import { BrandedMetricCard, VoiceIQDisplay } from '../components/BrandedMetricCard';
+import { calculateBrandedMetrics } from '../utils/brandedMetricsEngine';
 import SpectrumVisualizer from '../components/SpectrumVisualizer';
 import type { NavigationProp } from '../navigation/SimpleNavigator';
 import type { StoredRecording } from '../types';
@@ -32,6 +34,11 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
     loadAudio,
     unloadAudio,
   } = useAudioPlayer();
+
+  // Calculate new branded metrics from average voice metrics
+  const newBrandedMetrics = recording.averageMetrics 
+    ? calculateBrandedMetrics(recording.averageMetrics)
+    : null;
 
   useEffect(() => {
     let isMounted = true;
@@ -119,14 +126,56 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
           </View>
         ) : null}
 
+        {/* New Branded Metrics Display */}
+        {newBrandedMetrics && (
+          <View style={styles.metricsCard}>
+            <Text style={styles.sectionTitle}>Voice IQ™</Text>
+            <Text style={styles.metricsSubtitle}>Overall vocal quality for this recording</Text>
+            <VoiceIQDisplay score={newBrandedMetrics.voiceIQ} />
+          </View>
+        )}
+
+        {newBrandedMetrics && (
+          <View style={styles.metricsCard}>
+            <Text style={styles.sectionTitle}>Vocal Metrics</Text>
+            <Text style={styles.metricsSubtitle}>Performance across six core dimensions</Text>
+            <View style={styles.metricsGrid}>
+              <BrandedMetricCard
+                metricName="clarity"
+                score={newBrandedMetrics.clarity}
+              />
+              <BrandedMetricCard
+                metricName="power"
+                score={newBrandedMetrics.power}
+              />
+              <BrandedMetricCard
+                metricName="health"
+                score={newBrandedMetrics.health}
+              />
+              <BrandedMetricCard
+                metricName="warmth"
+                score={newBrandedMetrics.warmth}
+              />
+              <BrandedMetricCard
+                metricName="confidence"
+                score={newBrandedMetrics.confidence}
+              />
+              <BrandedMetricCard
+                metricName="expressiveness"
+                score={newBrandedMetrics.expressiveness}
+              />
+            </View>
+          </View>
+        )}
+
         <View style={styles.metricsCard}>
-          <Text style={styles.sectionTitle}>Voice IQ & Branded Metrics</Text>
-          <Text style={styles.metricsSubtitle}>Composite metrics for this recording</Text>
+          <Text style={styles.sectionTitle}>Legacy Voice IQ & Branded Metrics</Text>
+          <Text style={styles.metricsSubtitle}>Old metrics system (comparison)</Text>
           <BrandedMetricsOverview metrics={recording.averageBrandedMetrics} />
         </View>
 
         <View style={styles.metricsCard}>
-          <Text style={styles.sectionTitle}>Voice Metrics</Text>
+          <Text style={styles.sectionTitle}>Raw Voice Metrics</Text>
           <Text style={styles.metricsSubtitle}>Average values from this recording</Text>
           <VoiceMetrics metrics={recording.averageMetrics} />
         </View>
@@ -221,5 +270,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#8E8E93',
     marginBottom: 16,
+  },
+  metricsGrid: {
+    gap: 12,
   },
 });
