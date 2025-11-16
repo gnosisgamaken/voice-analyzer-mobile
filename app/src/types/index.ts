@@ -18,11 +18,12 @@ export interface VoiceSample {
 }
 
 export interface VoiceMetrics {
-  brightness: number;
-  clarity: number;
-  richness: number;
-  energy: number;
-  pitchStability: number;
+  brightness?: number;
+  clarity?: number;
+  richness?: number;
+  energy?: number;
+  pitchStability?: number;
+  pitchRange?: number;
 }
 
 export type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped';
