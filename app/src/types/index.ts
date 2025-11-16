@@ -44,6 +44,7 @@ export interface StoredRecording {
   timestamp: number;
   duration: number;
   audioUri: string;
+  processingStatus?: 'processing' | 'ready';
   location?: {
     latitude: number;
     longitude: number;

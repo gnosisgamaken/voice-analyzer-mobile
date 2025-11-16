@@ -19,14 +19,14 @@ import {
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
 import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
 import { getCurrentLocation, generateRecordingName, LocationData } from '../utils/locationService';
-import { saveRecordingMetadata, saveAudioFile, initializeStorage } from '../utils/storage';
+import { saveRecordingMetadata, saveAudioFile, initializeStorage, updateRecordingMetadata } from '../utils/storage';
 import { ensureAudioPermission, checkAudioPermission } from '../utils/permissions';
 import { logger } from '../utils/logger';
 import { AUDIO_CONFIG } from '../constants';
 import type { BrandedMetrics, AdvancedVoiceFeatures } from '../utils/VoiceMetricsEngine';
 import { analyzeVoiceHealth } from '../utils/voiceHealthMetrics';
 import { analyzeFluency } from '../utils/speechFluency';
-import { analyzeRecordingFile, type RecordingAnalysisResult } from '../utils/audioFileAnalysis';
+import { analyzeRecordingFile } from '../utils/audioFileAnalysis';
 import { computeAverageVoiceMetrics, computeAverageBrandedMetrics } from '../utils/metricsAggregation';
 
 const RECORDING_AUDIO_SET: AudioSet = {
@@ -207,6 +207,35 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       return null;
     }
   }, [stripFileScheme]);
+
+  const processRecordingAnalysis = useCallback(
+    async (recordingId: string, savedUri: string) => {
+      try {
+        const analysisResult = await analyzeRecordingFile(savedUri);
+        if (analysisResult) {
+          await updateRecordingMetadata(recordingId, {
+            averageMetrics: analysisResult.averageMetrics,
+            averageBrandedMetrics: analysisResult.averageBrandedMetrics ?? undefined,
+            analysis: {
+              waveform: analysisResult.waveform,
+              spectrum: analysisResult.spectrum,
+            },
+            processingStatus: 'ready',
+          });
+        } else {
+          await updateRecordingMetadata(recordingId, {
+            processingStatus: 'ready',
+          });
+        }
+      } catch (error) {
+        logger.error('Background analysis failed:', error);
+        await updateRecordingMetadata(recordingId, {
+          processingStatus: 'ready',
+        });
+      }
+    },
+    [],
+  );
 
   const simulateFeatures = useCallback(() => {
     const features: AudioFeatures = {
@@ -438,20 +467,14 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       let finalUri: string | null = null;
 
       if (uri && duration > 0) {
-        let analysisResult: RecordingAnalysisResult | null = null;
         try {
           const recordingId = `recording_${startTimeRef.current}`;
           const savedUri = await saveAudioFile(uri, recordingId);
           finalUri = savedUri;
           logger.debug('Audio file saved to:', savedUri);
-          analysisResult = await analyzeRecordingFile(savedUri);
-          if (analysisResult) {
-            allSamplesRef.current = analysisResult.samples;
-          }
 
-          const averageMetrics = analysisResult?.averageMetrics || calculateAverageMetrics();
-          const averageBrandedMetrics =
-            analysisResult?.averageBrandedMetrics || calculateAverageBrandedMetrics() || undefined;
+          const averageMetrics = calculateAverageMetrics();
+          const averageBrandedMetrics = calculateAverageBrandedMetrics() || undefined;
           const recordingName = generateRecordingName(locationRef.current, startTimeRef.current);
 
           await saveRecordingMetadata({
@@ -460,23 +483,24 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             timestamp: startTimeRef.current,
             duration,
             audioUri: savedUri,
-            location: locationRef.current ? {
-              latitude: locationRef.current.latitude,
-              longitude: locationRef.current.longitude,
-              city: locationRef.current.city,
-              formattedAddress: locationRef.current.formattedAddress,
-            } : undefined,
-            averageMetrics,
-            averageBrandedMetrics,
-            analysis: analysisResult
+            location: locationRef.current
               ? {
-                  waveform: analysisResult.waveform,
-                  spectrum: analysisResult.spectrum,
+                  latitude: locationRef.current.latitude,
+                  longitude: locationRef.current.longitude,
+                  city: locationRef.current.city,
+                  formattedAddress: locationRef.current.formattedAddress,
                 }
               : undefined,
+            averageMetrics,
+            averageBrandedMetrics,
+            processingStatus: 'processing',
           });
 
-          logger.info('Recording saved successfully:', recordingName);
+          setTimeout(() => {
+            processRecordingAnalysis(recordingId, savedUri);
+          }, 0);
+
+          logger.info('Recording saved, background analysis scheduled:', recordingName);
         } catch (saveError) {
           logger.error('Failed to save recording:', saveError);
         }
@@ -497,7 +521,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       resetRecording();
       return null;
     }
-  }, [duration, calculateAverageMetrics]);
+  }, [duration, calculateAverageMetrics, calculateAverageBrandedMetrics, processRecordingAnalysis]);
 
   const resetRecording = useCallback(() => {
     if (intervalRef.current) {

@@ -46,7 +46,12 @@ export async function initializeStorage(): Promise<void> {
 export async function saveRecordingMetadata(recording: StoredRecording): Promise<void> {
   try {
     const recordings = await getAllRecordings();
-    recordings.push(recording);
+    const existingIndex = recordings.findIndex((r) => r.id === recording.id);
+    if (existingIndex >= 0) {
+      recordings[existingIndex] = recording;
+    } else {
+      recordings.push(recording);
+    }
     
     await AsyncStorage.setItem(RECORDINGS_KEY, JSON.stringify(recordings));
     logger.debug('Saved recording metadata:', recording.name);
@@ -104,6 +109,25 @@ export async function deleteRecording(id: string): Promise<void> {
   } catch (error) {
     logger.error('Error deleting recording:', error);
     throw error;
+  }
+}
+
+export async function updateRecordingMetadata(
+  id: string,
+  updates: Partial<StoredRecording>,
+): Promise<void> {
+  try {
+    const recordings = await getAllRecordings();
+    const index = recordings.findIndex((r) => r.id === id);
+    if (index === -1) {
+      return;
+    }
+
+    recordings[index] = { ...recordings[index], ...updates };
+    await AsyncStorage.setItem(RECORDINGS_KEY, JSON.stringify(recordings));
+    logger.debug('Updated recording metadata:', id);
+  } catch (error) {
+    logger.error('Error updating recording metadata:', error);
   }
 }
 

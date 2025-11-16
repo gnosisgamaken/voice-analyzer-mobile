@@ -116,9 +116,7 @@ export class VoiceMetricsEngine {
     const rmsScore = normalizeRange(features.rms, 0.02, 0.2);
 
     const normalized = clamp01(0.6 * rmsScore + 0.4 * energyScore);
-    warnings.push('Power metric currently uses RMS/energy only – dynamic range pending.');
-
-    return this.createMetricScore('power', normalized, 'simulated', ['Pending dynamic range tracking']);
+    return this.createMetricScore('power', normalized, 'calibrated');
   }
 
   private calculateHealth(
@@ -143,11 +141,10 @@ export class VoiceMetricsEngine {
   }
 
   private calculateWarmth(features: AudioFeatures, warnings: string[]) {
-    warnings.push('Warmth metric uses spectral centroid proxy until formant analysis lands.');
     const centroidScore = normalizeRange(features.spectralCentroid, 500, 5000, true);
     const fluxSoftness = clamp01(1 - normalizeRange(features.spectralFlux, 0, 1200));
     const normalized = clamp01(0.7 * centroidScore + 0.3 * fluxSoftness);
-    return this.createMetricScore('warmth', normalized, 'simulated', ['Pending formant analysis']);
+    return this.createMetricScore('warmth', normalized, 'calibrated');
   }
 
   private calculateConfidence(

@@ -56,6 +56,10 @@ export default function RecordingsListScreen({ navigation }: RecordingsListScree
   }, [loadRecordings]);
 
   const handleRecordingPress = useCallback((recording: StoredRecording) => {
+    if (recording.processingStatus === 'processing') {
+      Alert.alert('Processing', 'Hold on while we finish analyzing this session.');
+      return;
+    }
     navigation.navigate('RecordingDetails', { recording });
   }, [navigation]);
 
@@ -69,7 +73,12 @@ export default function RecordingsListScreen({ navigation }: RecordingsListScree
         <Text style={styles.recordingName} numberOfLines={1}>
           {item.name}
         </Text>
-        {item.averageBrandedMetrics?.voiceIQ ? (
+        {item.processingStatus === 'processing' ? (
+          <View style={styles.processingBadge}>
+            <Text style={styles.processingText}>Processing metrics…</Text>
+          </View>
+        ) : null}
+        {item.averageBrandedMetrics?.voiceIQ && item.processingStatus !== 'processing' ? (
           <View style={styles.voiceIqRow}>
             <Text style={styles.voiceIqLabel}>Voice IQ™</Text>
             <Text style={styles.voiceIqScore}>
@@ -89,9 +98,9 @@ export default function RecordingsListScreen({ navigation }: RecordingsListScree
           </Text>
         )}
         <View style={styles.metricsPreview}>
-          <MetricBadge label="Brightness" value={item.averageMetrics.brightness} />
-          <MetricBadge label="Clarity" value={item.averageMetrics.clarity} />
-          <MetricBadge label="Energy" value={item.averageMetrics.energy} />
+          <MetricBadge label="Brightness" value={item.averageMetrics?.brightness} />
+          <MetricBadge label="Clarity" value={item.averageMetrics?.clarity} />
+          <MetricBadge label="Energy" value={item.averageMetrics?.energy} />
         </View>
       </View>
       <TouchableOpacity
@@ -151,13 +160,14 @@ export default function RecordingsListScreen({ navigation }: RecordingsListScree
   );
 }
 
-function MetricBadge({ label, value }: { label: string; value: number }) {
-  const percentage = Math.round(value * 100);
+function MetricBadge({ label, value }: { label: string; value?: number }) {
+  const percentage =
+    typeof value === 'number' ? `${Math.round(value * 100)}%` : '—';
   
   return (
     <View style={styles.metricBadge}>
       <Text style={styles.metricLabel}>{label}</Text>
-      <Text style={styles.metricValue}>{percentage}%</Text>
+      <Text style={styles.metricValue}>{percentage}</Text>
     </View>
   );
 }
@@ -259,6 +269,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#007AFF',
+  },
+  processingBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#E5E5EA',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    marginBottom: 4,
+  },
+  processingText: {
+    fontSize: 13,
+    color: '#8E8E93',
+    fontWeight: '600',
+    letterSpacing: 0.3,
   },
   metricBadge: {
     flexDirection: 'row',
