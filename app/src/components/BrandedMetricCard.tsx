@@ -12,7 +12,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, Pressable } from 'react-native';
 import { MaterialCard } from './MaterialCard';
 import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
 import { getBrandedMetricDetails } from '../utils/brandedMetricsEngine';
@@ -26,6 +26,7 @@ export interface BrandedMetricCardProps {
     label: string;
   };
   style?: ViewStyle;
+  onPress?: () => void;
 }
 
 export const BrandedMetricCard: React.FC<BrandedMetricCardProps> = ({
@@ -33,10 +34,11 @@ export const BrandedMetricCard: React.FC<BrandedMetricCardProps> = ({
   score,
   trend,
   style,
+  onPress,
 }) => {
   const details = getBrandedMetricDetails(metricName, score);
 
-  return (
+  const cardContent = (
     <MaterialCard style={[styles.card, style]} contentStyle={styles.cardContent}>
       {/* Header: Icon + Name */}
       <View style={styles.header}>
@@ -94,7 +96,26 @@ export const BrandedMetricCard: React.FC<BrandedMetricCardProps> = ({
 
       {/* Description (subtle) */}
       <Text style={styles.description}>{details.description}</Text>
+
+      {onPress && (
+        <Text style={styles.learnMoreHint}>Tap to learn more →</Text>
+      )}
     </MaterialCard>
+  );
+
+  if (!onPress) {
+    return cardContent;
+  }
+
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Learn more about ${metricName}`}
+      style={({ pressed }) => (pressed ? { opacity: 0.96 } : undefined)}
+    >
+      {cardContent}
+    </Pressable>
   );
 };
 
@@ -328,5 +349,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.tintColor,
     marginTop: SPACING.xs,
+  },
+  learnMoreHint: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.tintColor,
+    marginTop: SPACING.xs,
+    fontWeight: '600',
   },
 });

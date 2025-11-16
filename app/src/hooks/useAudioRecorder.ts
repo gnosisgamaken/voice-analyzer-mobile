@@ -31,6 +31,8 @@ import { analyzeRecordingFile } from '../utils/audioFileAnalysis';
 import { computeAverageVoiceMetrics, computeAverageBrandedMetrics } from '../utils/metricsAggregation';
 import { startPCMStreaming } from '../native/pcmStreamer';
 import { calculateBrandedMetrics } from '../utils/brandedMetricsEngine';
+import { addRecordingToBaseline, getBaselineStatus } from '../utils/baselineMetrics';
+import { addToTrendHistory } from '../utils/trendTracking';
 
 const RECORDING_AUDIO_SET: AudioSet = {
   AudioEncoderAndroid: AudioEncoderAndroidType.OPUS,
@@ -807,6 +809,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           const averageBrandedMetrics = calculateAverageBrandedMetrics() || undefined;
           const recordingName = generateRecordingName(locationRef.current, startTimeRef.current);
 
+          // Calculate new branded metrics for baseline and trend tracking
+          const newAverageBrandedMetrics = calculateBrandedMetrics(averageMetrics);
+
           await saveRecordingMetadata({
             id: recordingId,
             name: recordingName,
@@ -823,9 +828,18 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
               : undefined,
             averageMetrics,
             averageBrandedMetrics,
+            newAverageBrandedMetrics,
             processingStatus: 'processing',
             processingError: undefined,
           });
+
+          // Add to baseline and trend tracking (fire and forget)
+          addRecordingToBaseline(newAverageBrandedMetrics).catch(error => 
+            logger.error('Failed to add to baseline:', error)
+          );
+          addToTrendHistory(newAverageBrandedMetrics).catch(error =>
+            logger.error('Failed to add to trend history:', error)
+          );
 
           setTimeout(() => {
             processRecordingAnalysis(recordingId, savedUri);

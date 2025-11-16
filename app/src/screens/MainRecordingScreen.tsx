@@ -18,6 +18,9 @@ import { VoiceSample } from '../types';
 import type { NavigationProp } from '../navigation/SimpleNavigator';
 import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
 import { MaterialCard } from '../components/MaterialCard';
+import { getBaselineStatus, type BaselineStatus } from '../utils/baselineMetrics';
+import { MetricExplanationModal } from '../components/MetricExplanationModal';
+import type { MetricKey } from '../content/metricEducation';
 
 interface MainRecordingScreenProps {
   navigation: NavigationProp;
@@ -61,6 +64,25 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
   } = useAudioRecorder();
 
   const [samples, setSamples] = useState<VoiceSample[]>([]);
+  const [baselineStatus, setBaselineStatus] = useState<BaselineStatus | null>(null);
+
+  // Load baseline status on mount and after recordings
+  useEffect(() => {
+    loadBaselineStatus();
+  }, []);
+
+  useEffect(() => {
+    if (recordingState === 'stopped') {
+      // Reload baseline status after recording stops
+      setTimeout(loadBaselineStatus, 500);
+    }
+  }, [recordingState]);
+
+  const loadBaselineStatus = async () => {
+    const status = await getBaselineStatus();
+    setBaselineStatus(status);
+  };
+  const [educationModal, setEducationModal] = useState<{ metricKey: MetricKey; score?: number } | null>(null);
 
   useEffect(() => {
     if (currentSample) {
@@ -83,6 +105,13 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
   }));
 
   const sessionCopy = SESSION_COPY[recordingState] ?? SESSION_COPY.idle;
+  const brandedMetrics = currentSample?.newBrandedMetrics;
+
+  const openMetricModal = (metricKey: MetricKey, score?: number) => {
+    setEducationModal({ metricKey, score });
+  };
+
+  const closeMetricModal = () => setEducationModal(null);
 
   return (
     <View style={styles.screen}>
@@ -136,44 +165,74 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
             onStop={stopRecording}
           />
 
+          {/* Baseline Status Card */}
+          {baselineStatus && !baselineStatus.isEstablished && (
+            <MaterialCard style={styles.baselineCard} variant="regular">
+              <View style={styles.baselineHeader}>
+                <Text style={styles.baselineTitle}>
+                  Building your baseline... {baselineStatus.recordingCount} of 5
+                </Text>
+                <Text style={styles.baselineSubtitle}>
+                  Record {baselineStatus.remainingCount} more session{baselineStatus.remainingCount !== 1 ? 's' : ''} to establish your vocal baseline
+                </Text>
+              </View>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${baselineStatus.progress}%` }
+                  ]} 
+                />
+              </View>
+            </MaterialCard>
+          )}
+
           {/* New Branded Metrics Display */}
-          {currentSample?.newBrandedMetrics && (
+          {brandedMetrics && (
             <View style={styles.section}>
               <Text style={styles.sectionHeader}>Voice IQ™</Text>
               <VoiceIQDisplay 
-                score={currentSample.newBrandedMetrics.voiceIQ}
+                score={brandedMetrics.voiceIQ}
                 style={styles.voiceIQCard}
               />
             </View>
           )}
 
-          {currentSample?.newBrandedMetrics && (
+          {brandedMetrics && (
             <View style={styles.section}>
               <Text style={styles.sectionHeader}>Vocal Metrics</Text>
               <View style={styles.metricsGrid}>
                 <BrandedMetricCard
                   metricName="clarity"
-                  score={currentSample.newBrandedMetrics.clarity}
+                  score={brandedMetrics.clarity}
+                  onPress={() => openMetricModal('clarity', brandedMetrics.clarity)}
                 />
                 <BrandedMetricCard
                   metricName="power"
-                  score={currentSample.newBrandedMetrics.power}
+                  score={brandedMetrics.power}
+                  onPress={() => openMetricModal('power', brandedMetrics.power)}
                 />
                 <BrandedMetricCard
                   metricName="health"
-                  score={currentSample.newBrandedMetrics.health}
+                  score={brandedMetrics.health}
+                  onPress={() => openMetricModal('health', brandedMetrics.health)}
                 />
                 <BrandedMetricCard
                   metricName="warmth"
-                  score={currentSample.newBrandedMetrics.warmth}
+                  score={brandedMetrics.warmth}
+                  onPress={() => openMetricModal('warmth', brandedMetrics.warmth)}
                 />
                 <BrandedMetricCard
                   metricName="confidence"
-                  score={currentSample.newBrandedMetrics.confidence}
+                  score={brandedMetrics.confidence}
+                  onPress={() => openMetricModal('confidence', brandedMetrics.confidence)}
                 />
                 <BrandedMetricCard
                   metricName="expressiveness"
-                  score={currentSample.newBrandedMetrics.expressiveness}
+                  score={brandedMetrics.expressiveness}
+                  onPress={() =>
+                    openMetricModal('expressiveness', brandedMetrics.expressiveness)
+                  }
                 />
               </View>
             </View>
@@ -190,6 +249,12 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
             <VoiceMetrics metrics={currentSample?.voiceMetrics || null} />
           </View>
         </ScrollView>
+        <MetricExplanationModal
+          visible={Boolean(educationModal)}
+          metricKey={educationModal?.metricKey ?? null}
+          score={educationModal?.score}
+          onClose={closeMetricModal}
+        />
       </SafeAreaView>
     </View>
   );
@@ -285,6 +350,32 @@ const styles = StyleSheet.create({
     color: COLORS.secondaryLabel,
     textTransform: 'uppercase',
     letterSpacing: 1,
+  },
+  baselineCard: {
+    marginHorizontal: SPACING.md,
+  },
+  baselineHeader: {
+    gap: SPACING.xs,
+  },
+  baselineTitle: {
+    ...TYPOGRAPHY.headline,
+    color: COLORS.label,
+  },
+  baselineSubtitle: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.secondaryLabel,
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: 'rgba(142,142,147,0.2)',
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginTop: SPACING.sm,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: COLORS.tintColor,
+    borderRadius: 3,
   },
   section: {
     gap: SPACING.sm,
