@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Node / Expo artifacts
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+
+# Native build outputs
+build/
+ios/Pods/
+ios/build/
+
+# Logs
+*.log
