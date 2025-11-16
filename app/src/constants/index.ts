@@ -15,7 +15,9 @@ export const COLORS = {
   tertiaryLabel: PlatformColor?.('tertiaryLabel') ?? fallbackColor('#C7C7CC'),
   primary: '#246BFD',
   primaryMuted: 'rgba(36,107,253,0.15)',
+  tintColor: '#246BFD',
   success: PlatformColor?.('systemGreen') ?? fallbackColor('#34C759'),
+  error: PlatformColor?.('systemRed') ?? fallbackColor('#FF3B30'),
   warning: PlatformColor?.('systemOrange') ?? fallbackColor('#FF9500'),
   critical: PlatformColor?.('systemRed') ?? fallbackColor('#FF3B30'),
   surface: 'rgba(255,255,255,0.82)',
@@ -35,6 +37,11 @@ export const TYPOGRAPHY = {
   title2: {
     fontSize: 22,
     lineHeight: 28,
+    fontWeight: '600' as const,
+  },
+  title3: {
+    fontSize: 20,
+    lineHeight: 25,
     fontWeight: '600' as const,
   },
   headline: {

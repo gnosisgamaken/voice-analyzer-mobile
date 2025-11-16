@@ -52,11 +52,11 @@ export default function VoiceMetrics({ metrics }: VoiceMetricsProps) {
 
   return (
     <View style={styles.container}>
-      <MetricCard name="brightness" value={metrics.brightness} label="Brightness" />
-      <MetricCard name="clarity" value={metrics.clarity} label="Clarity" />
-      <MetricCard name="richness" value={metrics.richness} label="Richness" />
-      <MetricCard name="energy" value={metrics.energy} label="Energy" />
-      <MetricCard name="pitchStability" value={metrics.pitchStability} label="Pitch Stability" />
+      <MetricCard name="brightness" value={metrics.brightness ?? 0} label="Brightness" />
+      <MetricCard name="clarity" value={metrics.clarity ?? 0} label="Clarity" />
+      <MetricCard name="richness" value={metrics.richness ?? 0} label="Richness" />
+      <MetricCard name="energy" value={metrics.energy ?? 0} label="Energy" />
+      <MetricCard name="pitchStability" value={metrics.pitchStability ?? 0} label="Pitch Stability" />
     </View>
   );
 }

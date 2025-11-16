@@ -89,6 +89,12 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.topBar}>
           <TouchableOpacity
+            style={styles.demoButton}
+            onPress={() => navigation.navigate('BrandedMetricsDemo')}
+          >
+            <Text style={styles.demoButtonText}>✨ Demo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.recordsButton}
             onPress={() => navigation.navigate('RecordingsList')}
           >
@@ -155,7 +161,21 @@ const styles = StyleSheet.create({
   topBar: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
+    gap: SPACING.sm,
     paddingHorizontal: SPACING.md,
+  },
+  demoButton: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,215,0,0.3)',
+    backgroundColor: 'rgba(255,215,0,0.15)',
+  },
+  demoButtonText: {
+    fontSize: 15,
+    color: '#FFD700',
+    fontWeight: '600',
   },
   recordsButton: {
     paddingHorizontal: SPACING.md,

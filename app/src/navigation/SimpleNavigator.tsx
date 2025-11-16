@@ -2,7 +2,7 @@ import React, { useState, ReactNode } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { StoredRecording } from '../types';
 
-type Screen = 'MainRecording' | 'RecordingsList' | 'RecordingDetails';
+type Screen = 'MainRecording' | 'RecordingsList' | 'RecordingDetails' | 'BrandedMetricsDemo';
 
 interface NavigationParams {
   recording?: StoredRecording;
@@ -23,6 +23,7 @@ interface SimpleNavigatorProps {
     MainRecording: React.ComponentType<{ navigation: NavigationProp }>;
     RecordingsList: React.ComponentType<{ navigation: NavigationProp }>;
     RecordingDetails: React.ComponentType<{ navigation: NavigationProp; route: { params: { recording: StoredRecording } } }>;
+    BrandedMetricsDemo: React.ComponentType<{ navigation: NavigationProp }>;
   };
 }
 
