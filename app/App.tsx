@@ -4,6 +4,7 @@ import MainRecordingScreen from './src/screens/MainRecordingScreen';
 import RecordingsListScreen from './src/screens/RecordingsListScreen';
 import RecordingDetailsScreen from './src/screens/RecordingDetailsScreen';
 import BrandedMetricsDemoScreen from './src/screens/BrandedMetricsDemoScreen';
+import NotificationSettingsScreen from './src/screens/NotificationSettingsScreen';
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         RecordingsList: RecordingsListScreen,
         RecordingDetails: RecordingDetailsScreen,
         BrandedMetricsDemo: BrandedMetricsDemoScreen,
+        NotificationSettings: NotificationSettingsScreen,
       }}
     />
   );

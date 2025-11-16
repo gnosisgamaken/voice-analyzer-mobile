@@ -22,6 +22,8 @@ import { MaterialCard } from '../components/MaterialCard';
 import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
 import { calculateBrandedMetrics, getTrendIndicator } from '../utils/brandedMetricsEngine';
 import type { VoiceMetrics } from '../types';
+import { MetricExplanationModal } from '../components/MetricExplanationModal';
+import type { MetricKey } from '../content/metricEducation';
 
 // Sample voice metrics for demonstration
 const sampleVoiceMetrics: VoiceMetrics = {
@@ -44,6 +46,7 @@ const previousVoiceMetrics: VoiceMetrics = {
 
 export default function BrandedMetricsDemoScreen() {
   const [showTrends, setShowTrends] = useState(false);
+  const [educationModal, setEducationModal] = useState<{ metricKey: MetricKey; score?: number } | null>(null);
 
   // Calculate current and previous branded metrics
   const currentMetrics = calculateBrandedMetrics(sampleVoiceMetrics);
@@ -59,6 +62,12 @@ export default function BrandedMetricsDemoScreen() {
     currentMetrics.expressiveness,
     previousMetrics.expressiveness
   );
+
+  const openMetricModal = (metricKey: MetricKey, score?: number) => {
+    setEducationModal({ metricKey, score });
+  };
+
+  const closeMetricModal = () => setEducationModal(null);
 
   return (
     <View style={styles.screen}>
@@ -94,7 +103,7 @@ export default function BrandedMetricsDemoScreen() {
             <Text style={styles.sectionHeader}>Voice IQ™ Composite</Text>
             <VoiceIQDisplay
               score={currentMetrics.voiceIQ}
-              onLearnMore={() => console.log('Learn more about Voice IQ')}
+              onLearnMore={() => openMetricModal('voiceIQ', currentMetrics.voiceIQ)}
             />
           </View>
 
@@ -111,6 +120,7 @@ export default function BrandedMetricsDemoScreen() {
                 score={currentMetrics.clarity}
                 trend={showTrends ? clarityTrend : undefined}
                 style={styles.metricCard}
+                onPress={() => openMetricModal('clarity', currentMetrics.clarity)}
               />
 
               <BrandedMetricCard
@@ -118,6 +128,7 @@ export default function BrandedMetricsDemoScreen() {
                 score={currentMetrics.power}
                 trend={showTrends ? powerTrend : undefined}
                 style={styles.metricCard}
+                onPress={() => openMetricModal('power', currentMetrics.power)}
               />
 
               <BrandedMetricCard
@@ -125,6 +136,7 @@ export default function BrandedMetricsDemoScreen() {
                 score={currentMetrics.health}
                 trend={showTrends ? healthTrend : undefined}
                 style={styles.metricCard}
+                onPress={() => openMetricModal('health', currentMetrics.health)}
               />
 
               <BrandedMetricCard
@@ -132,6 +144,7 @@ export default function BrandedMetricsDemoScreen() {
                 score={currentMetrics.warmth}
                 trend={showTrends ? warmthTrend : undefined}
                 style={styles.metricCard}
+                onPress={() => openMetricModal('warmth', currentMetrics.warmth)}
               />
 
               <BrandedMetricCard
@@ -139,6 +152,7 @@ export default function BrandedMetricsDemoScreen() {
                 score={currentMetrics.confidence}
                 trend={showTrends ? confidenceTrend : undefined}
                 style={styles.metricCard}
+                onPress={() => openMetricModal('confidence', currentMetrics.confidence)}
               />
 
               <BrandedMetricCard
@@ -146,6 +160,7 @@ export default function BrandedMetricsDemoScreen() {
                 score={currentMetrics.expressiveness}
                 trend={showTrends ? expressivenessTrend : undefined}
                 style={styles.metricCard}
+                onPress={() => openMetricModal('expressiveness', currentMetrics.expressiveness)}
               />
             </View>
           </View>
@@ -184,6 +199,12 @@ export default function BrandedMetricsDemoScreen() {
             </Text>
           </MaterialCard>
         </ScrollView>
+        <MetricExplanationModal
+          visible={Boolean(educationModal)}
+          metricKey={educationModal?.metricKey ?? null}
+          score={educationModal?.score}
+          onClose={closeMetricModal}
+        />
       </SafeAreaView>
     </View>
   );

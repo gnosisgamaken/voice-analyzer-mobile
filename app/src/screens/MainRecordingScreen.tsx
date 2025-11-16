@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,8 +11,6 @@ import {
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import WaveformView from '../components/WaveformView';
 import RecordingControls from '../components/RecordingControls';
-import VoiceMetrics from '../components/VoiceMetrics';
-import { BrandedMetricsOverview } from '../components/BrandedMetricsOverview';
 import { BrandedMetricCard, VoiceIQDisplay } from '../components/BrandedMetricCard';
 import { VoiceSample } from '../types';
 import type { NavigationProp } from '../navigation/SimpleNavigator';
@@ -21,6 +19,7 @@ import { MaterialCard } from '../components/MaterialCard';
 import { getBaselineStatus, type BaselineStatus } from '../utils/baselineMetrics';
 import { MetricExplanationModal } from '../components/MetricExplanationModal';
 import type { MetricKey } from '../content/metricEducation';
+import { getEmptyStateCopy, getPostRecordingInsight } from '../content/microcopy';
 
 interface MainRecordingScreenProps {
   navigation: NavigationProp;
@@ -66,22 +65,24 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
   const [samples, setSamples] = useState<VoiceSample[]>([]);
   const [baselineStatus, setBaselineStatus] = useState<BaselineStatus | null>(null);
 
-  // Load baseline status on mount and after recordings
-  useEffect(() => {
-    loadBaselineStatus();
+  const refreshBaselineStatus = useCallback(async () => {
+    try {
+      const status = await getBaselineStatus();
+      setBaselineStatus(status);
+    } catch (error) {
+      console.warn('Failed to load baseline status', error);
+    }
   }, []);
 
   useEffect(() => {
-    if (recordingState === 'stopped') {
-      // Reload baseline status after recording stops
-      setTimeout(loadBaselineStatus, 500);
-    }
-  }, [recordingState]);
+    refreshBaselineStatus();
+  }, [refreshBaselineStatus]);
 
-  const loadBaselineStatus = async () => {
-    const status = await getBaselineStatus();
-    setBaselineStatus(status);
-  };
+  useEffect(() => {
+    if (recordingState === 'stopped') {
+      refreshBaselineStatus();
+    }
+  }, [recordingState, refreshBaselineStatus]);
   const [educationModal, setEducationModal] = useState<{ metricKey: MetricKey; score?: number } | null>(null);
 
   useEffect(() => {
@@ -106,6 +107,12 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
 
   const sessionCopy = SESSION_COPY[recordingState] ?? SESSION_COPY.idle;
   const brandedMetrics = currentSample?.newBrandedMetrics;
+  const postRecordingInsight = brandedMetrics ? getPostRecordingInsight(brandedMetrics) : null;
+  const firstRecordingCopy = getEmptyStateCopy('firstRecording');
+  const baselineCopy = getEmptyStateCopy('noBaseline');
+  const showFirstRecordingCard = baselineStatus?.recordingCount === 0;
+  const showBaselineCard =
+    Boolean(baselineStatus) && !baselineStatus?.isEstablished && (baselineStatus?.recordingCount ?? 0) > 0;
 
   const openMetricModal = (metricKey: MetricKey, score?: number) => {
     setEducationModal({ metricKey, score });
@@ -123,6 +130,12 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
             onPress={() => navigation.navigate('BrandedMetricsDemo')}
           >
             <Text style={styles.demoButtonText}>✨ Demo</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.notificationsButton}
+            onPress={() => navigation.navigate('NotificationSettings')}
+          >
+            <Text style={styles.notificationsButtonText}>Notifications</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.recordsButton}
@@ -165,25 +178,39 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
             onStop={stopRecording}
           />
 
-          {/* Baseline Status Card */}
-          {baselineStatus && !baselineStatus.isEstablished && (
-            <MaterialCard style={styles.baselineCard} variant="regular">
-              <View style={styles.baselineHeader}>
-                <Text style={styles.baselineTitle}>
-                  Building your baseline... {baselineStatus.recordingCount} of 5
-                </Text>
-                <Text style={styles.baselineSubtitle}>
-                  Record {baselineStatus.remainingCount} more session{baselineStatus.remainingCount !== 1 ? 's' : ''} to establish your vocal baseline
-                </Text>
-              </View>
-              <View style={styles.progressBar}>
-                <View 
+          {showFirstRecordingCard && (
+            <MaterialCard style={styles.guidanceCard} variant="regular">
+              <Text style={styles.guidanceEyebrow}>Welcome</Text>
+              <Text style={styles.guidanceTitle}>{firstRecordingCopy.title}</Text>
+              <Text style={styles.guidanceBody}>{firstRecordingCopy.body}</Text>
+              {firstRecordingCopy.helper && (
+                <Text style={styles.guidanceHelper}>{firstRecordingCopy.helper}</Text>
+              )}
+            </MaterialCard>
+          )}
+
+          {showBaselineCard && baselineStatus && (
+            <MaterialCard style={styles.guidanceCard} variant="regular">
+              <Text style={styles.guidanceEyebrow}>Baseline progress</Text>
+              <Text style={styles.guidanceTitle}>{baselineCopy.title}</Text>
+              <Text style={styles.guidanceBody}>
+                Record {baselineStatus.remainingCount} more session
+                {baselineStatus.remainingCount !== 1 ? 's' : ''} to lock in your natural range.
+              </Text>
+              {baselineCopy.helper && (
+                <Text style={styles.guidanceHelper}>{baselineCopy.helper}</Text>
+              )}
+              <View style={styles.baselineProgressTrack}>
+                <View
                   style={[
-                    styles.progressFill, 
-                    { width: `${baselineStatus.progress}%` }
-                  ]} 
+                    styles.baselineProgressFill,
+                    { width: `${baselineStatus.progress}%` },
+                  ]}
                 />
               </View>
+              <Text style={styles.progressMeta}>
+                {baselineStatus.recordingCount} / 5 sessions logged
+              </Text>
             </MaterialCard>
           )}
 
@@ -194,6 +221,7 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
               <VoiceIQDisplay 
                 score={brandedMetrics.voiceIQ}
                 style={styles.voiceIQCard}
+                onLearnMore={() => openMetricModal('voiceIQ', brandedMetrics.voiceIQ)}
               />
             </View>
           )}
@@ -238,16 +266,16 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
             </View>
           )}
 
-          {/* Legacy Metrics for Comparison */}
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Legacy Voice IQ & Branded Metrics</Text>
-            <BrandedMetricsOverview metrics={currentSample?.brandedMetrics} />
-          </View>
-
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Raw Voice Metrics</Text>
-            <VoiceMetrics metrics={currentSample?.voiceMetrics || null} />
-          </View>
+          {recordingState === 'stopped' && postRecordingInsight && (
+            <MaterialCard style={styles.insightCard} variant='regular'>
+              <Text style={styles.insightEyebrow}>Post-recording insight</Text>
+              <Text style={styles.insightTitle}>{postRecordingInsight.title}</Text>
+              <Text style={styles.insightBody}>{postRecordingInsight.body}</Text>
+              {postRecordingInsight.helper && (
+                <Text style={styles.insightHelper}>{postRecordingInsight.helper}</Text>
+              )}
+            </MaterialCard>
+          )}
         </ScrollView>
         <MetricExplanationModal
           visible={Boolean(educationModal)}
@@ -298,6 +326,19 @@ const styles = StyleSheet.create({
   recordsButtonText: {
     fontSize: 15,
     color: COLORS.label,
+    fontWeight: '600',
+  },
+  notificationsButton: {
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: 999,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(36,107,253,0.25)',
+    backgroundColor: 'rgba(36,107,253,0.08)',
+  },
+  notificationsButtonText: {
+    fontSize: 15,
+    color: COLORS.tintColor,
     fontWeight: '600',
   },
   scrollContent: {
@@ -351,31 +392,44 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  baselineCard: {
+  guidanceCard: {
     marginHorizontal: SPACING.md,
-  },
-  baselineHeader: {
     gap: SPACING.xs,
   },
-  baselineTitle: {
-    ...TYPOGRAPHY.headline,
+  guidanceEyebrow: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.secondaryLabel,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  guidanceTitle: {
+    ...TYPOGRAPHY.title3,
     color: COLORS.label,
   },
-  baselineSubtitle: {
+  guidanceBody: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.secondaryLabel,
+  },
+  guidanceHelper: {
     ...TYPOGRAPHY.caption,
     color: COLORS.secondaryLabel,
   },
-  progressBar: {
+  baselineProgressTrack: {
     height: 6,
     backgroundColor: 'rgba(142,142,147,0.2)',
-    borderRadius: 3,
+    borderRadius: 999,
     overflow: 'hidden',
     marginTop: SPACING.sm,
   },
-  progressFill: {
+  baselineProgressFill: {
     height: '100%',
     backgroundColor: COLORS.tintColor,
-    borderRadius: 3,
+    borderRadius: 999,
+  },
+  progressMeta: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.secondaryLabel,
+    marginTop: SPACING.xs,
   },
   section: {
     gap: SPACING.sm,
@@ -391,5 +445,27 @@ const styles = StyleSheet.create({
   metricsGrid: {
     gap: SPACING.md,
     paddingHorizontal: SPACING.md,
+  },
+  insightCard: {
+    marginHorizontal: SPACING.md,
+    gap: SPACING.xs,
+  },
+  insightEyebrow: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.secondaryLabel,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+  },
+  insightTitle: {
+    ...TYPOGRAPHY.title3,
+    color: COLORS.label,
+  },
+  insightBody: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.secondaryLabel,
+  },
+  insightHelper: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.secondaryLabel,
   },
 });

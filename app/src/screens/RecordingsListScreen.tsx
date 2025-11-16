@@ -5,6 +5,11 @@ import { getAllRecordings, deleteRecording } from '../utils/storage';
 import type { NavigationProp } from '../navigation/SimpleNavigator';
 import { formatTime, formatDate } from '../utils/formatting';
 import { logger } from '../utils/logger';
+import { getEmptyStateCopy } from '../content/microcopy';
+import { calculateBrandedMetrics } from '../utils/brandedMetricsEngine';
+import { getBaselineMetrics } from '../utils/baselineMetrics';
+import { getTrendAnalysis, getTrendHistory } from '../utils/trendTracking';
+import { generateInsights, type Insight } from '../utils/insightsEngine';
 
 interface RecordingsListScreenProps {
   navigation: NavigationProp;
@@ -13,6 +18,7 @@ interface RecordingsListScreenProps {
 export default function RecordingsListScreen({ navigation }: RecordingsListScreenProps) {
   const [recordings, setRecordings] = useState<StoredRecording[]>([]);
   const [loading, setLoading] = useState(true);
+  const [insights, setInsights] = useState<Insight[]>([]);
 
   const loadRecordings = useCallback(async () => {
     try {
@@ -28,6 +34,48 @@ export default function RecordingsListScreen({ navigation }: RecordingsListScree
   useEffect(() => {
     loadRecordings();
   }, [loadRecordings]);
+  useEffect(() => {
+    if (recordings.length === 0) {
+      setInsights([]);
+      return;
+    }
+
+    let isMounted = true;
+    async function loadInsights() {
+      try {
+        const latestRecording = recordings[0];
+        if (!latestRecording?.averageMetrics) {
+          setInsights([]);
+          return;
+        }
+
+        const latestMetrics = calculateBrandedMetrics(latestRecording.averageMetrics);
+        const [baseline, trendAnalysis, history] = await Promise.all([
+          getBaselineMetrics(),
+          getTrendAnalysis(),
+          getTrendHistory(30),
+        ]);
+
+        const generated = generateInsights({
+          latestMetrics,
+          baseline,
+          trendAnalysis,
+          history,
+        });
+
+        if (isMounted) {
+          setInsights(generated);
+        }
+      } catch (error) {
+        logger.warn('Failed to load insights', error);
+      }
+    }
+
+    loadInsights();
+    return () => {
+      isMounted = false;
+    };
+  }, [recordings]);
 
   const handleDelete = useCallback((recording: StoredRecording) => {
     Alert.alert(
@@ -115,15 +163,17 @@ export default function RecordingsListScreen({ navigation }: RecordingsListScree
     </TouchableOpacity>
   );
 
-  const renderEmpty = () => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>🎤</Text>
-      <Text style={styles.emptyTitle}>No Recordings Yet</Text>
-      <Text style={styles.emptySubtitle}>
-        Start recording to see your voice analysis history
-      </Text>
-    </View>
-  );
+  const renderEmpty = () => {
+    const copy = getEmptyStateCopy('noRecordings');
+    return (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyIcon}>🎤</Text>
+        <Text style={styles.emptyTitle}>{copy.title}</Text>
+        <Text style={styles.emptySubtitle}>{copy.body}</Text>
+        {copy.helper && <Text style={styles.emptyHelper}>{copy.helper}</Text>}
+      </View>
+    );
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -144,6 +194,23 @@ export default function RecordingsListScreen({ navigation }: RecordingsListScree
           {recordings.length} {recordings.length === 1 ? 'recording' : 'recordings'}
         </Text>
       </View>
+
+      {insights.length > 0 && (
+        <View style={styles.insightsCard}>
+          <Text style={styles.insightsTitle}>Insights</Text>
+          {insights.map(insight => (
+            <View key={insight.id} style={styles.insightRow}>
+              <View style={styles.insightBadge}>
+                <Text style={styles.insightBadgeText}>{formatInsightLabel(insight.category)}</Text>
+              </View>
+              <View style={styles.insightCopy}>
+                <Text style={styles.insightHeading}>{insight.title}</Text>
+                <Text style={styles.insightDescription}>{insight.description}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+      )}
 
       <FlatList
         data={recordings}
@@ -203,6 +270,49 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 16,
+    color: '#8E8E93',
+  },
+  insightsCard: {
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderRadius: 12,
+    padding: 16,
+  },
+  insightsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#000000',
+    marginBottom: 8,
+  },
+  insightRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 6,
+  },
+  insightBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(36,107,253,0.12)',
+    alignSelf: 'flex-start',
+  },
+  insightBadgeText: {
+    fontSize: 12,
+    color: '#246BFD',
+    fontWeight: '600',
+  },
+  insightCopy: {
+    flex: 1,
+    gap: 2,
+  },
+  insightHeading: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  insightDescription: {
+    fontSize: 14,
     color: '#8E8E93',
   },
   listContent: {
@@ -336,4 +446,25 @@ const styles = StyleSheet.create({
     color: '#8E8E93',
     textAlign: 'center',
   },
+  emptyHelper: {
+    fontSize: 14,
+    color: '#8E8E93',
+    textAlign: 'center',
+    marginTop: 6,
+  },
 });
+
+function formatInsightLabel(category: Insight['category']): string {
+  switch (category) {
+    case 'whatsImproving':
+      return 'Improving';
+    case 'whatToWatch':
+      return 'Watch';
+    case 'streak':
+      return 'Streak';
+    case 'correlation':
+      return 'Pattern';
+    default:
+      return 'Insight';
+  }
+}

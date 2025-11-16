@@ -1,15 +1,18 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import PlaybackControls from '../components/PlaybackControls';
-import VoiceMetrics from '../components/VoiceMetrics';
-import { BrandedMetricsOverview } from '../components/BrandedMetricsOverview';
 import { BrandedMetricCard, VoiceIQDisplay } from '../components/BrandedMetricCard';
 import { calculateBrandedMetrics } from '../utils/brandedMetricsEngine';
 import SpectrumVisualizer from '../components/SpectrumVisualizer';
 import type { NavigationProp } from '../navigation/SimpleNavigator';
 import type { StoredRecording } from '../types';
 import { formatTime, formatDate } from '../utils/formatting';
+import { MetricExplanationModal } from '../components/MetricExplanationModal';
+import type { MetricKey } from '../content/metricEducation';
+import { getBaselineMetrics } from '../utils/baselineMetrics';
+import { getTrendAnalysis, getTrendHistory } from '../utils/trendTracking';
+import { generateInsights, type Insight } from '../utils/insightsEngine';
 
 interface RecordingDetailsScreenProps {
   navigation: NavigationProp;
@@ -22,6 +25,8 @@ interface RecordingDetailsScreenProps {
 
 export default function RecordingDetailsScreen({ navigation, route }: RecordingDetailsScreenProps) {
   const { recording } = route.params;
+  const [educationModal, setEducationModal] = useState<{ metricKey: MetricKey; score?: number } | null>(null);
+  const [insights, setInsights] = useState<Insight[]>([]);
 
   const {
     playbackState,
@@ -39,6 +44,48 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
   const newBrandedMetrics = recording.averageMetrics 
     ? calculateBrandedMetrics(recording.averageMetrics)
     : null;
+
+  const brandedMetrics = newBrandedMetrics;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadInsights() {
+      if (!brandedMetrics) {
+        setInsights([]);
+        return;
+      }
+
+      const [baseline, trendAnalysis, history] = await Promise.all([
+        getBaselineMetrics(),
+        getTrendAnalysis(),
+        getTrendHistory(30),
+      ]);
+
+      const generated = generateInsights({
+        latestMetrics: brandedMetrics,
+        baseline,
+        trendAnalysis,
+        history,
+      });
+
+      if (isMounted) {
+        setInsights(generated);
+      }
+    }
+
+    loadInsights();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [brandedMetrics]);
+
+  const openMetricModal = (metricKey: MetricKey, score?: number) => {
+    setEducationModal({ metricKey, score });
+  };
+
+  const closeMetricModal = () => setEducationModal(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -126,60 +173,81 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
           </View>
         ) : null}
 
-        {/* New Branded Metrics Display */}
-        {newBrandedMetrics && (
+        {insights.length > 0 && (
           <View style={styles.metricsCard}>
-            <Text style={styles.sectionTitle}>Voice IQ™</Text>
-            <Text style={styles.metricsSubtitle}>Overall vocal quality for this recording</Text>
-            <VoiceIQDisplay score={newBrandedMetrics.voiceIQ} />
+            <Text style={styles.sectionTitle}>Insights</Text>
+            <Text style={styles.metricsSubtitle}>Baseline and trend highlights</Text>
+            {insights.map(insight => (
+              <View key={insight.id} style={styles.insightRow}>
+                <View style={styles.insightBadge}>
+                  <Text style={styles.insightBadgeText}>{formatInsightLabel(insight.category)}</Text>
+                </View>
+                <View style={styles.insightCopy}>
+                  <Text style={styles.insightTitle}>{insight.title}</Text>
+                  <Text style={styles.insightDescription}>{insight.description}</Text>
+                </View>
+              </View>
+            ))}
           </View>
         )}
 
-        {newBrandedMetrics && (
+        {/* New Branded Metrics Display */}
+        {brandedMetrics && (
+          <View style={styles.metricsCard}>
+            <Text style={styles.sectionTitle}>Voice IQ™</Text>
+            <Text style={styles.metricsSubtitle}>Overall vocal quality for this recording</Text>
+            <VoiceIQDisplay
+              score={brandedMetrics.voiceIQ}
+              onLearnMore={() => openMetricModal('voiceIQ', brandedMetrics.voiceIQ)}
+            />
+          </View>
+        )}
+
+        {brandedMetrics && (
           <View style={styles.metricsCard}>
             <Text style={styles.sectionTitle}>Vocal Metrics</Text>
             <Text style={styles.metricsSubtitle}>Performance across six core dimensions</Text>
             <View style={styles.metricsGrid}>
               <BrandedMetricCard
                 metricName="clarity"
-                score={newBrandedMetrics.clarity}
+                score={brandedMetrics.clarity}
+                onPress={() => openMetricModal('clarity', brandedMetrics.clarity)}
               />
               <BrandedMetricCard
                 metricName="power"
-                score={newBrandedMetrics.power}
+                score={brandedMetrics.power}
+                onPress={() => openMetricModal('power', brandedMetrics.power)}
               />
               <BrandedMetricCard
                 metricName="health"
-                score={newBrandedMetrics.health}
+                score={brandedMetrics.health}
+                onPress={() => openMetricModal('health', brandedMetrics.health)}
               />
               <BrandedMetricCard
                 metricName="warmth"
-                score={newBrandedMetrics.warmth}
+                score={brandedMetrics.warmth}
+                onPress={() => openMetricModal('warmth', brandedMetrics.warmth)}
               />
               <BrandedMetricCard
                 metricName="confidence"
-                score={newBrandedMetrics.confidence}
+                score={brandedMetrics.confidence}
+                onPress={() => openMetricModal('confidence', brandedMetrics.confidence)}
               />
               <BrandedMetricCard
                 metricName="expressiveness"
-                score={newBrandedMetrics.expressiveness}
+                score={brandedMetrics.expressiveness}
+                onPress={() => openMetricModal('expressiveness', brandedMetrics.expressiveness)}
               />
             </View>
           </View>
         )}
-
-        <View style={styles.metricsCard}>
-          <Text style={styles.sectionTitle}>Legacy Voice IQ & Branded Metrics</Text>
-          <Text style={styles.metricsSubtitle}>Old metrics system (comparison)</Text>
-          <BrandedMetricsOverview metrics={recording.averageBrandedMetrics} />
-        </View>
-
-        <View style={styles.metricsCard}>
-          <Text style={styles.sectionTitle}>Raw Voice Metrics</Text>
-          <Text style={styles.metricsSubtitle}>Average values from this recording</Text>
-          <VoiceMetrics metrics={recording.averageMetrics} />
-        </View>
       </ScrollView>
+      <MetricExplanationModal
+        visible={Boolean(educationModal)}
+        metricKey={educationModal?.metricKey ?? null}
+        score={educationModal?.score}
+        onClose={closeMetricModal}
+      />
     </SafeAreaView>
   );
 }
@@ -274,4 +342,49 @@ const styles = StyleSheet.create({
   metricsGrid: {
     gap: 12,
   },
+  insightRow: {
+    flexDirection: 'row',
+    gap: 12,
+    paddingVertical: 8,
+  },
+  insightBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    backgroundColor: 'rgba(36,107,253,0.12)',
+    alignSelf: 'flex-start',
+  },
+  insightBadgeText: {
+    fontSize: 12,
+    color: '#246BFD',
+    fontWeight: '600',
+  },
+  insightCopy: {
+    flex: 1,
+    gap: 4,
+  },
+  insightTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000000',
+  },
+  insightDescription: {
+    fontSize: 14,
+    color: '#8E8E93',
+  },
 });
+
+function formatInsightLabel(category: Insight['category']): string {
+  switch (category) {
+    case 'whatsImproving':
+      return 'Improving';
+    case 'whatToWatch':
+      return 'Watch';
+    case 'streak':
+      return 'Streak';
+    case 'correlation':
+      return 'Pattern';
+    default:
+      return 'Insight';
+  }
+}
