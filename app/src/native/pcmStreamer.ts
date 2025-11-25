@@ -3,8 +3,8 @@ import { Buffer } from 'buffer';
 import { logger } from '../utils/logger';
 
 const MODULE_NAME = 'VoicePCMStreamer';
-const EVENT_NAME = 'VoicePCMStreamer:onFrame';
-const PCM_BYTES_PER_SAMPLE = 2;
+const EVENT_NAME = 'onAudioPCM';
+const PCM_BYTES_PER_SAMPLE = 4; // Float32
 
 type PCMStreamerModule = {
   startStreaming(options?: PCMStreamingOptions): Promise<unknown>;
@@ -21,6 +21,7 @@ export type PCMFramePayload = {
   channelData?: number[];
   sampleRate?: number;
   chunk?: string;
+  pcmData?: string;
   frameSamples?: number;
 };
 
@@ -43,7 +44,7 @@ const decodeChunk = (chunk: string): Float32Array | null => {
 
     const samples = new Float32Array(sampleCount);
     for (let i = 0; i < sampleCount; i++) {
-      samples[i] = buffer.readInt16LE(i * PCM_BYTES_PER_SAMPLE) / 32768;
+      samples[i] = buffer.readFloatLE(i * PCM_BYTES_PER_SAMPLE);
     }
     return samples;
   } catch (error) {
@@ -53,6 +54,9 @@ const decodeChunk = (chunk: string): Float32Array | null => {
 };
 
 const toFloatArray = (payload: PCMFramePayload): Float32Array | null => {
+  if (typeof payload.pcmData === 'string' && payload.pcmData.length > 0) {
+    return decodeChunk(payload.pcmData);
+  }
   if (typeof payload.chunk === 'string' && payload.chunk.length > 0) {
     return decodeChunk(payload.chunk);
   }

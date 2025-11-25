@@ -8,6 +8,9 @@ setup_permissions([
   'LocationWhenInUse'
 ])
 
+# Disable New Architecture completely - must be set BEFORE prepare_react_native_project
+ENV['RCT_NEW_ARCH_ENABLED'] = '0'
+
 prepare_react_native_project!
 
 target 'voiceanalyzermobile' do
@@ -31,6 +34,27 @@ target 'voiceanalyzermobile' do
     installer.pods_project.targets.each do |target|
       target.build_configurations.each do |config|
         config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.1'
+        config.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+        
+        # Explicitly disable New Architecture for ALL pods
+        config.build_settings.delete('RCT_NEW_ARCH_ENABLED')
+        config.build_settings['RCT_NEW_ARCH_ENABLED'] = '0'
+      end
+      
+      # Fix for Hermes build script missing REACT_NATIVE_PATH
+      if target.name == 'hermes-engine'
+        target.build_configurations.each do |config|
+          config.build_settings['REACT_NATIVE_PATH'] = "${PODS_ROOT}/../node_modules/react-native"
+        end
+      end
+
+      # Ensure @react-native-community/slider never pulls Fabric sources
+      next unless target.name == 'react-native-slider'
+      next unless target.respond_to?(:subspecs)
+
+      target.subspecs.each do |subspec|
+        next unless subspec.name&.end_with?('Fabric')
+        subspec.remove_from_project
       end
     end
   end

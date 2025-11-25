@@ -1,0 +1,107 @@
+
+Showing All Errors Only
+Prepare build
+Prepare packages
+Build target React-runtimescheduler
+Build target React-Core
+Build target DoubleConversion
+Build target RNPermissions
+Build target RNGestureHandler
+Build target RNFS
+Build target react-native-sfsymbols
+Build target react-native-safe-area-context
+CompileC /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewState.o /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewState.cpp normal arm64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'react-native-safe-area-context' from project 'Pods')
+    cd /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods
+    
+    Using response file: /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/82b82416624d2658e5098eb0a28c15c5-common-args.resp
+    
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c++ -ivfsstatcache /Users/pedro/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -fno-color-diagnostics -fmodules-prune-interval\=86400 -fmodules-prune-after\=345600 -fbuild-session-file\=/Users/pedro/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -fmodules-validate-once-per-build-session -Wnon-modular-include-in-framework-module -Werror\=non-modular-include-in-framework-module -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Werror\=return-type -Wdocumentation -Wunreachable-code -Werror\=deprecated-objc-isa-usage -Werror\=objc-root-class -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wunused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wempty-body -Wuninitialized -Wconditional-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wconstant-conversion -Wint-conversion -Wbool-conversion -Wenum-conversion -Wno-float-conversion -Wnon-literal-null-conversion -Wobjc-literal-conversion -Wshorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -Wno-implicit-fallthrough -fstrict-aliasing -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Winfinite-recursion -Wmove -Wcomma -Wblock-capture-autoreleasing -Wstrict-prototypes -Wrange-loop-analysis -Wno-semicolon-before-method-body -Wunguarded-availability @/Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/82b82416624d2658e5098eb0a28c15c5-common-args.resp -DFOLLY_NO_CONFIG -DFOLLY_MOBILE\=1 -DFOLLY_USE_LIBCPP\=1 -Wno-comma -Wno-shorten-64-to-32 -include /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Target\ Support\ Files/react-native-safe-area-context/react-native-safe-area-context-prefix.pch -MMD -MT dependencies -MF /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewState.d --serialize-diagnostics /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewState.dia -c /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewState.cpp -o /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewState.o
+
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewState.cpp:1:
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewState.h:3:10: fatal error: 'react/renderer/components/safeareacontext/Props.h' file not found
+    3 | #include <react/renderer/components/safeareacontext/Props.h>
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 error generated.
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewState.h:3:10: 'react/renderer/components/safeareacontext/Props.h' file not found
+
+Build target react-native-blur
+Build target fmt
+Build target boost-boost_privacy
+Build target Yoga
+Build target ReactCommon
+Build target ReactAppDependencyProvider
+Build target SocketRocket
+Build target React-rendererdebug
+Build target React-renderercss
+Build target React-performancetimeline
+Build target React-rendererconsistency
+Build target React-perflogger
+Build target React-oscompat
+Build target React-microtasksnativemodule
+Build target React-jsitooling
+Build target React-logger
+Build target React-jsinspectortracing
+Build target React-jsinspectornetwork
+Build target React-jsinspector
+Build target React-jsinspectorcdp
+Build target React-jsiexecutor
+Build target React-jserrorhandler
+Build target React-jsi
+Build target React-idlecallbacksnativemodule
+Build target React-hermes
+Build target React-featureflagsnativemodule
+Build target React-featureflags
+Build target React-domnativemodule
+Build target React-defaultsnativemodule
+Build target React-debug
+Build target React-cxxreact-React-cxxreact_privacy
+Build target React-cxxreact
+Build target React-RuntimeHermes
+Build target React-RuntimeCore
+Build target React-RCTVibration
+Build target React-RuntimeApple
+Build target React-RCTText
+Build target React-RCTSettings
+Build target React-RCTRuntime
+Build target React-RCTNetwork
+Build target React-RCTImage
+Build target React-RCTLinking
+Build target React-RCTFabric
+Build target React-RCTBlob
+Build target React-RCTAppDelegate
+Build target React-RCTAnimation
+Build target React-NativeModulesApple
+Build target React-Mapbuffer
+Build target React-Fabric
+Build target React-FabricComponents
+Build target React-FabricImage
+Build target React-CoreModules
+Build target React-Core-React-Core_privacy
+Build target RNReactNativeHapticFeedback
+Build target RNCAsyncStorage-RNCAsyncStorage_resources
+Build target RNCAsyncStorage
+Build target RCTTypeSafety
+Build target RCTDeprecation
+Build target Pods-voiceanalyzermobile
+Build target glog-glog_privacy
+Build target react-native-slider
+Build target react-native-geolocation-service
+Build target hermes-engine
+Build target ReactCodegen
+Build target React-RCTFBReactNativeSpec
+Build target React-Codegen
+Build target RCT-Folly-RCT-Folly_privacy
+Build target RNScreens
+Build target RNAudioRecorderPlayer
+Build target glog
+Build target RCT-Folly
+Build target React-ImageManager
+Build target React-utils
+Build target React-runtimeexecutor
+Build target React-graphics
+Build target voiceanalyzermobile
+Build target voiceanalyzermobile
+
+
+Activity Log Complete    24/11/25, 17:50    62.6 seconds

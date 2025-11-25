@@ -1,0 +1,31 @@
+appId: com.voiceanalyzer.mobile
+---
+# Test: Microphone Permissions Denial
+# Verifies: App behavior when user denies microphone access
+
+- launchApp:
+    clearState: true
+- assertVisible: "Voice Analyzer"
+
+# Navigate to recording screen
+- tapOn: "Record"
+
+# Attempt to start recording (should trigger permission prompt on first launch)
+- tapOn:
+    id: "record-button"
+
+# Deny permission in system dialog (Maestro handles this)
+- denyPermissions:
+    - microphone
+
+# Verify error state or message
+# Note: Update these assertions based on actual error handling in the app
+- assertVisible: 
+    text: "Microphone access is required"
+    
+# Or if using a modal/alert
+# - assertVisible: "Enable Permissions"
+
+# Verify that recording didn't start
+- assertNotVisible: "Live analysis"
+- assertVisible: "Session ready"

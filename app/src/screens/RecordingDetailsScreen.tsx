@@ -1,27 +1,29 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
+import { NavigationBar } from '../components/NavigationBar';
+import { MaterialCard } from '../components/MaterialCard';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAudioPlayer } from '../hooks/useAudioPlayer';
 import PlaybackControls from '../components/PlaybackControls';
 import { BrandedMetricCard, VoiceIQDisplay } from '../components/BrandedMetricCard';
 import { calculateBrandedMetrics } from '../utils/brandedMetricsEngine';
 import SpectrumVisualizer from '../components/SpectrumVisualizer';
-import type { NavigationProp } from '../navigation/SimpleNavigator';
 import type { StoredRecording } from '../types';
+import type { HistoryStackParamList } from '../navigation/types';
 import { formatTime, formatDate } from '../utils/formatting';
+import { InsightsCard } from '../components/InsightsCard';
 import { MetricExplanationModal } from '../components/MetricExplanationModal';
 import type { MetricKey } from '../content/metricEducation';
 import { getBaselineMetrics } from '../utils/baselineMetrics';
 import { getTrendAnalysis, getTrendHistory } from '../utils/trendTracking';
 import { generateInsights, type Insight } from '../utils/insightsEngine';
+import SFSymbol from '../components/SFSymbol';
+import { logger } from '../utils/logger';
+import { DesignTokens } from '../design/tokens';
+import { Typography } from '../design/typography';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
-interface RecordingDetailsScreenProps {
-  navigation: NavigationProp;
-  route: {
-    params: {
-      recording: StoredRecording;
-    };
-  };
-}
+type RecordingDetailsScreenProps = NativeStackScreenProps<HistoryStackParamList, 'RecordingDetails'>;
 
 export default function RecordingDetailsScreen({ navigation, route }: RecordingDetailsScreenProps) {
   const { recording } = route.params;
@@ -41,7 +43,7 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
   } = useAudioPlayer();
 
   // Calculate new branded metrics from average voice metrics
-  const newBrandedMetrics = recording.averageMetrics 
+  const newBrandedMetrics = recording.averageMetrics
     ? calculateBrandedMetrics(recording.averageMetrics)
     : null;
 
@@ -64,13 +66,14 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
 
       const generated = generateInsights({
         latestMetrics: brandedMetrics,
-        baseline,
+        baseline: baseline ? { isEstablished: true, metrics: baseline } : null,
         trendAnalysis,
         history,
       });
 
       if (isMounted) {
         setInsights(generated);
+        logger.test('Insights generated', { count: generated.length });
       }
     }
 
@@ -102,18 +105,23 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent />
-      
-      <View style={styles.topBar}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-      </View>
+      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
 
-      <ScrollView 
+      <NavigationBar
+        title="Recording Details"
+        leftSlot={
+          <TouchableOpacity
+            testID="back-button"
+            onPress={() => navigation.goBack()}
+            style={styles.backButton}
+          >
+            <SFSymbol name="chevron.backward" style={styles.backButtonIcon} />
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+        }
+      />
+
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
@@ -122,12 +130,12 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
           <Text style={styles.subtitle}>{formatDate(recording.timestamp, { style: 'long' })}</Text>
         </View>
 
-        <View style={styles.infoCard}>
+        <MaterialCard style={styles.infoCard} variant="solid-elevated">
           <View style={styles.infoRow}>
             <Text style={styles.infoLabel}>Duration</Text>
             <Text style={styles.infoValue}>{formatTime(recording.duration)}</Text>
           </View>
-          
+
           {recording.location?.formattedAddress && (
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Location</Text>
@@ -141,10 +149,10 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
               {recording.audioUri ? '✓ Saved' : 'No audio file'}
             </Text>
           </View>
-        </View>
+        </MaterialCard>
 
         {recording.audioUri && (
-          <View style={styles.playbackCard}>
+          <MaterialCard style={styles.playbackCard} variant="solid-elevated">
             <Text style={styles.sectionTitle}>Playback</Text>
             <PlaybackControls
               playbackState={playbackState}
@@ -155,7 +163,7 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
               onStop={stop}
               onSeek={seek}
             />
-          </View>
+          </MaterialCard>
         )}
 
         {recording.analysis?.spectrum?.length ? (
@@ -173,21 +181,17 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
           </View>
         ) : null}
 
-        {insights.length > 0 && (
-          <View style={styles.metricsCard}>
-            <Text style={styles.sectionTitle}>Insights</Text>
-            <Text style={styles.metricsSubtitle}>Baseline and trend highlights</Text>
-            {insights.map(insight => (
-              <View key={insight.id} style={styles.insightRow}>
-                <View style={styles.insightBadge}>
-                  <Text style={styles.insightBadgeText}>{formatInsightLabel(insight.category)}</Text>
-                </View>
-                <View style={styles.insightCopy}>
-                  <Text style={styles.insightTitle}>{insight.title}</Text>
-                  <Text style={styles.insightDescription}>{insight.description}</Text>
-                </View>
-              </View>
-            ))}
+        {insights.length > 0 ? (
+          <InsightsCard
+            insights={insights}
+            title="Insights"
+            subtitle="Baseline and trend highlights"
+            style={styles.metricsCard}
+          />
+        ) : (
+          <View style={[styles.metricsCard, styles.loadingCard]}>
+            <LoadingSpinner />
+            <Text style={styles.loadingText}>Generating insights...</Text>
           </View>
         )}
 
@@ -241,6 +245,13 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
             </View>
           </View>
         )}
+
+        <View style={styles.noticeCard}>
+          <Text style={styles.noticeTitle}>Keep perturbation data trustworthy.</Text>
+          <Text style={styles.noticeBody}>
+            Record with the mic about 15–20 cm away and avoid whispering or excessive movement so jitter and shimmer comparisons stay reliable.
+          </Text>
+        </View>
       </ScrollView>
       <MetricExplanationModal
         visible={Boolean(educationModal)}
@@ -255,136 +266,106 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2F2F7',
-  },
-  topBar: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+    backgroundColor: DesignTokens.colors.bgPrimary,
+    paddingTop: 52, // NavigationBar height
   },
   backButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: DesignTokens.spacing.xs,
+  },
+  backButtonIcon: {
+    fontSize: 22,
+    color: DesignTokens.colors.tint,
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#007AFF',
+    ...Typography.body,
+    color: DesignTokens.colors.tint,
     fontWeight: '600',
   },
-  scrollContent: {
-    paddingBottom: 32,
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#000000',
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#8E8E93',
-  },
   infoCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
+    marginBottom: DesignTokens.spacing.md,
   },
   infoRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: DesignTokens.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F2F7',
+    borderBottomColor: DesignTokens.colors.separator,
   },
   infoLabel: {
-    fontSize: 16,
-    color: '#8E8E93',
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
   },
   infoValue: {
-    fontSize: 16,
-    color: '#000000',
+    ...Typography.body,
+    color: DesignTokens.colors.textPrimary,
     fontWeight: '500',
     maxWidth: '60%',
     textAlign: 'right',
   },
   playbackCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
+    marginBottom: DesignTokens.spacing.md,
   },
   metricsCard: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 16,
-    marginBottom: 16,
-    borderRadius: 12,
-    padding: 16,
+    marginBottom: DesignTokens.spacing.md,
+  },
+  noticeCard: {
+    marginBottom: DesignTokens.spacing.md,
+    padding: DesignTokens.spacing.md,
+    borderRadius: DesignTokens.radii.lg,
+    backgroundColor: DesignTokens.colors.bgCard,
+  },
+  noticeTitle: {
+    ...Typography.headline,
+    color: DesignTokens.colors.textPrimary,
+    marginBottom: 4,
+  },
+  noticeBody: {
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
+    lineHeight: 20,
   },
   sectionTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000000',
+    ...Typography.title3,
+    color: DesignTokens.colors.textPrimary,
     marginBottom: 4,
   },
   metricsSubtitle: {
-    fontSize: 14,
-    color: '#8E8E93',
-    marginBottom: 16,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
+    marginBottom: DesignTokens.spacing.md,
   },
   metricsGrid: {
-    gap: 12,
+    gap: DesignTokens.spacing.sm,
   },
-  insightRow: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 8,
+  header: {
+    paddingHorizontal: DesignTokens.spacing.md,
+    paddingVertical: DesignTokens.spacing.md,
   },
-  insightBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(36,107,253,0.12)',
-    alignSelf: 'flex-start',
+  title: {
+    ...Typography.largeTitle,
+    color: DesignTokens.colors.textPrimary,
+    marginBottom: 4,
   },
-  insightBadgeText: {
-    fontSize: 12,
-    color: '#246BFD',
-    fontWeight: '600',
+  subtitle: {
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
   },
-  insightCopy: {
-    flex: 1,
-    gap: 4,
+  scrollContent: {
+    paddingBottom: 32,
   },
-  insightTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+  loadingCard: {
+    padding: DesignTokens.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: DesignTokens.spacing.sm,
+    backgroundColor: DesignTokens.colors.bgCard,
+    borderRadius: DesignTokens.radii.lg,
   },
-  insightDescription: {
-    fontSize: 14,
-    color: '#8E8E93',
+  loadingText: {
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
   },
 });
-
-function formatInsightLabel(category: Insight['category']): string {
-  switch (category) {
-    case 'whatsImproving':
-      return 'Improving';
-    case 'whatToWatch':
-      return 'Watch';
-    case 'streak':
-      return 'Streak';
-    case 'correlation':
-      return 'Pattern';
-    default:
-      return 'Insight';
-  }
-}

@@ -1,0 +1,74 @@
+appId: com.voiceanalyzer.mobile
+---
+# Test: Core Recording Flow
+# Verifies: Record → Pause → Resume → Stop → Save → View Details
+
+- launchApp
+- assertVisible: "Voice Analyzer"
+
+# Navigate to recording screen (assuming tab navigation)
+- tapOn: "Record"
+- assertVisible: "Session ready"
+
+# Start recording
+- tapOn: 
+    id: "record-button"
+- assertVisible: "Live analysis"
+- assertVisible: "Analyzing… hold steady."
+
+# Wait for 3 seconds of recording
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Pause recording
+- tapOn:
+    id: "pause-button"
+- assertVisible: "Paused"
+
+# Resume recording
+- tapOn:
+    id: "resume-button"
+- assertVisible: "Live analysis"
+
+# Wait for 2 more seconds
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Stop recording
+- tapOn:
+    id: "stop-button"
+- assertVisible: "Session saved"
+- assertVisible: "Great work. Review your insights below."
+
+# Verify metrics are displayed
+- assertVisible: "Voice IQ™"
+- assertVisible: "Vocal Metrics"
+
+# Scroll down to see all metrics
+- scroll:
+    direction: DOWN
+
+# Verify branded metrics cards
+- assertVisible: "Clarity"
+- assertVisible: "Power"
+- assertVisible: "Health"
+
+# Navigate to recordings list
+- tapOn: "History"
+- assertVisible: "Recordings"
+
+# Tap on the first recording
+- tapOn:
+    index: 0
+    id: "recording-card"
+
+# Verify recording details screen
+- assertVisible: "Recording Details"
+- assertVisible: "Duration"
+- assertVisible: "Playback"
+- assertVisible: "Voice IQ™"
+
+# Go back
+- tapOn:
+    id: "back-button"
+- assertVisible: "Recordings"

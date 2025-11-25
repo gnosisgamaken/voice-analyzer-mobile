@@ -1,68 +1,88 @@
 import React, { PropsWithChildren } from 'react';
-import { View, StyleSheet, ViewStyle, Platform, ColorValue } from 'react-native';
-import { BlurView } from '@react-native-community/blur';
-import { useReduceTransparency } from '../hooks/useAccessibilitySettings';
-import { COLORS, RADII } from '../constants';
+import { View, StyleSheet, ViewStyle, Platform } from 'react-native';
+import { LiquidGlassView } from './LiquidGlassView';
+import { DesignTokens } from '../design/tokens';
 
-type MaterialVariant = 'thin' | 'regular' | 'ultra';
-
-import type { StyleProp } from 'react-native';
+export type MaterialVariant =
+  | 'glass-regular'
+  | 'glass-clear'
+  | 'solid-elevated'
+  | 'solid-flat';
 
 interface MaterialCardProps extends PropsWithChildren {
-  style?: StyleProp<ViewStyle>;
-  contentStyle?: StyleProp<ViewStyle>;
   variant?: MaterialVariant;
-  tint?: ColorValue;
+  style?: ViewStyle;
+  contentStyle?: ViewStyle;
 }
 
-const BLUR_CONFIG: Record<MaterialVariant, { amount: number; type: 'light' | 'default' }> = {
-  thin: { amount: 16, type: Platform.OS === 'ios' ? 'light' : 'default' },
-  regular: { amount: 22, type: Platform.OS === 'ios' ? 'light' : 'default' },
-  ultra: { amount: 28, type: Platform.OS === 'ios' ? 'light' : 'default' },
-};
-
-export function MaterialCard({
-  children,
+export const MaterialCard: React.FC<MaterialCardProps> = ({
+  variant = 'solid-flat',
   style,
   contentStyle,
-  variant = 'thin',
-  tint = COLORS.surface,
-}: MaterialCardProps) {
-  const reduceTransparency = useReduceTransparency();
-  const blurConfig = BLUR_CONFIG[variant];
+  children,
+}) => {
+  const containerStyle = [styles.card, style];
+
+  if (variant === 'solid-flat') {
+    return (
+      <View style={[containerStyle, styles.solidFlat, contentStyle]}>
+        {children}
+      </View>
+    );
+  }
+
+  if (variant === 'solid-elevated') {
+    return (
+      <View style={[containerStyle, styles.solidElevated, contentStyle]}>
+        {children}
+      </View>
+    );
+  }
+
+  const glassVariant = variant === 'glass-clear' ? 'clear' : 'regular';
 
   return (
-    <View style={[styles.base, style]}>
-      {reduceTransparency ? (
-        <View style={[styles.opaque, { backgroundColor: tint }]} />
-      ) : (
-        <BlurView
-          style={StyleSheet.absoluteFill}
-          blurAmount={blurConfig.amount}
-          blurType={blurConfig.type}
-          reducedTransparencyFallbackColor={tint as string}
-        />
-      )}
-      <View style={[styles.content, contentStyle]}>{children}</View>
-    </View>
+    <LiquidGlassView
+      variant={glassVariant}
+      style={[containerStyle, styles.glassContainer]}
+    >
+      <View style={contentStyle}>{children}</View>
+    </LiquidGlassView>
   );
-}
+};
 
 const styles = StyleSheet.create({
-  base: {
-    borderRadius: RADII.lg,
+  card: {
+    borderRadius: DesignTokens.radii.lg,
     overflow: 'hidden',
-    position: 'relative',
+  },
+  solidFlat: {
+    backgroundColor: 'rgba(255,255,255,0.04)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.25)',
+    borderColor: 'rgba(255,255,255,0.08)',
+    padding: DesignTokens.spacing.md,
   },
-  opaque: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.92,
+  solidElevated: {
+    backgroundColor: DesignTokens.colors.bgCard,
+    padding: DesignTokens.spacing.md,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.12)',
+    ...Platform.select({
+      ios: {
+        shadowColor: 'rgba(3,6,21,0.6)',
+        shadowOffset: { width: 0, height: 4 },
+        shadowRadius: 18,
+        shadowOpacity: 1,
+      },
+      android: {
+        elevation: 4,
+      },
+    }),
   },
-  content: {
-    position: 'relative',
-    padding: 16,
+  glassContainer: {
+    padding: DesignTokens.spacing.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: 'rgba(255,255,255,0.08)',
   },
 });
 

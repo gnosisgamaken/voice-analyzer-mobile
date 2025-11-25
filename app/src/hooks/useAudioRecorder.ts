@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import { Buffer } from 'buffer';
 import AudioRecorderPlayer, {
@@ -20,9 +20,10 @@ import {
 import { autoCorrelatePitch } from '../utils/audioAnalysis';
 import { VoiceSample, RecordingState, VoiceMetrics } from '../types';
 import { getCurrentLocation, generateRecordingName, LocationData } from '../utils/locationService';
-import { saveRecordingMetadata, saveAudioFile, initializeStorage, updateRecordingMetadata } from '../utils/storage';
+import { saveRecordingMetadata, saveAudioFile, initializeStorage, updateRecordingMetadata, getAllRecordings } from '../utils/storage';
 import { ensureAudioPermission, checkAudioPermission } from '../utils/permissions';
 import { logger } from '../utils/logger';
+import { trackEvent } from '../utils/telemetry';
 import { AUDIO_CONFIG } from '../constants';
 import type { BrandedMetrics, AdvancedVoiceFeatures } from '../utils/VoiceMetricsEngine';
 import { analyzeVoiceHealth } from '../utils/voiceHealthMetrics';
@@ -33,6 +34,8 @@ import { startPCMStreaming } from '../native/pcmStreamer';
 import { calculateBrandedMetrics } from '../utils/brandedMetricsEngine';
 import { addRecordingToBaseline, getBaselineStatus } from '../utils/baselineMetrics';
 import { addToTrendHistory } from '../utils/trendTracking';
+import { analyzeRecordingMilestones } from '../utils/progressSignals';
+import { evaluateProgressNotifications } from '../services/progressNotifications';
 
 const RECORDING_AUDIO_SET: AudioSet = {
   AudioEncoderAndroid: AudioEncoderAndroidType.OPUS,
@@ -94,6 +97,9 @@ const floatSamplesToPCMBuffer = (samples: Float32Array): Buffer => {
 // NOTE: Real-time audio analysis uses the native PCM streaming module when available.
 // Web (and native fallback) continue to simulate data per AUDIO_IMPLEMENTATION_NOTES.md.
 
+type AnalysisMode = 'idle' | 'streaming' | 'fallbackRecorder' | 'simulated';
+type MeasurementWarning = 'lowSampleRate' | 'simulated';
+
 export interface UseAudioRecorderReturn {
   recordingState: RecordingState;
   currentSample: VoiceSample | null;
@@ -103,12 +109,39 @@ export interface UseAudioRecorderReturn {
   resumeRecording: () => Promise<void>;
   stopRecording: () => Promise<string | null>;
   resetRecording: () => void;
+  analysisMode: AnalysisMode;
+  measurementWarnings: MeasurementWarning[];
+  isStarting: boolean;
 }
 
 export function useAudioRecorder(): UseAudioRecorderReturn {
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [currentSample, setCurrentSample] = useState<VoiceSample | null>(null);
   const [duration, setDuration] = useState(0);
+  const [analysisMode, setAnalysisMode] = useState<AnalysisMode>('idle');
+  const [measurementWarnings, setMeasurementWarnings] = useState<MeasurementWarning[]>([]);
+
+  const updateMeasurementWarning = useCallback(
+    (warning: MeasurementWarning, active: boolean) => {
+      setMeasurementWarnings((previous) => {
+        const hasWarning = previous.includes(warning);
+        if (active && !hasWarning) {
+          trackEvent('measurement_warning_added', { warning });
+          return [...previous, warning];
+        }
+        if (!active && hasWarning) {
+          trackEvent('measurement_warning_removed', { warning });
+          return previous.filter((item) => item !== warning);
+        }
+        return previous;
+      });
+    },
+    [],
+  );
+
+  useEffect(() => {
+    trackEvent('analysis_mode_changed', { mode: analysisMode });
+  }, [analysisMode]);
 
   const recorderRef = useRef<AudioRecorderPlayer | null>(null);
   const recordingFileRef = useRef<string | null>(null);
@@ -175,19 +208,19 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       tempoVariability:
         energyHistoryRef.current.length > 1
           ? Math.min(
-              1,
-              Math.sqrt(
-                energyHistoryRef.current.reduce(
-                  (sum, energy) => sum + Math.pow(energy - metrics.energy, 2),
-                  0,
-                ) / energyHistoryRef.current.length,
-              ),
-            )
+            1,
+            Math.sqrt(
+              energyHistoryRef.current.reduce(
+                (sum, energy) => sum + Math.pow(energy - metrics.energy, 2),
+                0,
+              ) / energyHistoryRef.current.length,
+            ),
+          )
           : undefined,
     };
 
     const brandedMetrics = calculateBrandedVoiceMetrics(features, advancedFeatures);
-    
+
     // Calculate new branded metrics from voice metrics
     const newBrandedMetrics = calculateBrandedMetrics(metrics);
 
@@ -449,6 +482,12 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         return;
       }
 
+      if (sampleRate < AUDIO_CONFIG.sampleRate) {
+        updateMeasurementWarning('lowSampleRate', true);
+      } else {
+        updateMeasurementWarning('lowSampleRate', false);
+      }
+
       appendStreamingSamples(samples);
 
       const window = streamingWindowRef.current;
@@ -463,7 +502,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       const pitchHz = autoCorrelatePitch(window, sampleRate);
       ingestFeatures(features, pitchHz);
     },
-    [appendStreamingSamples, ingestFeatures],
+    [appendStreamingSamples, ingestFeatures, updateMeasurementWarning],
   );
 
   const stopStreaming = useCallback(async () => {
@@ -562,7 +601,14 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     logger.debug('Started polling analysis loop');
   }, [processAudioBuffer]);
 
+  const [isStarting, setIsStarting] = useState(false);
+
+  // ... (existing refs)
+
   const startRecording = useCallback(async () => {
+    if (isStarting) return;
+    setIsStarting(true);
+
     try {
       logger.debug('Start recording called');
       streamingSessionActiveRef.current = false;
@@ -571,6 +617,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
 
       if (Platform.OS === 'web') {
         logger.debug('Web platform - recording simulation only');
+        setAnalysisMode('simulated');
+        setMeasurementWarnings(['simulated']);
         setRecordingState('recording');
         startTimeRef.current = Date.now();
         totalPausedDurationRef.current = 0;
@@ -578,19 +626,21 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         allSamplesRef.current = [];
         analyzerRef.current.reset();
         startAnalysisLoop();
+        setIsStarting(false);
         return;
       }
 
       const hasPermission = await ensureAudioPermission();
       if (!hasPermission) {
         logger.error('Audio permission denied');
+        setIsStarting(false);
         const status = await checkAudioPermission();
         const actions = status.canAskAgain
           ? [{ text: 'OK' as const }]
           : [
-              { text: 'Cancel', style: 'cancel' as const },
-              { text: 'Open Settings', onPress: () => Linking.openSettings() },
-            ];
+            { text: 'Cancel', style: 'cancel' as const },
+            { text: 'Open Settings', onPress: () => Linking.openSettings() },
+          ];
         Alert.alert(
           'Permission Required',
           status.canAskAgain
@@ -603,8 +653,16 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       logger.info('Audio permission granted');
 
       await initializeStorage();
-      locationRef.current = await getCurrentLocation();
-      logger.debug('Location:', locationRef.current?.formattedAddress || 'none');
+
+      // Non-blocking location fetch
+      getCurrentLocation()
+        .then(loc => {
+          locationRef.current = loc;
+          logger.debug('Location acquired:', loc?.formattedAddress || 'none');
+        })
+        .catch(err => {
+          logger.warn('Failed to get location:', err);
+        });
 
       startTimeRef.current = Date.now();
       recordingStartTimeRef.current = Date.now();
@@ -614,11 +672,17 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       analyzerRef.current.reset();
       recordingFileRef.current = null;
 
-      const streamingActive = await startRealtimeStreaming();
+      // Race streaming start with a timeout to prevent UI freeze
+      const streamingPromise = startRealtimeStreaming();
+      const timeoutPromise = new Promise<boolean>(resolve => setTimeout(() => resolve(false), 2000));
+
+      const streamingActive = await Promise.race([streamingPromise, timeoutPromise]);
       streamingSessionActiveRef.current = streamingActive;
-      logger.debug(`PCM streaming availability: ${streamingActive ? 'active' : 'unavailable'}`);
+      logger.debug(`PCM streaming availability: ${streamingActive ? 'active' : 'unavailable/timed-out'}`);
 
       if (!streamingActive) {
+        setAnalysisMode('fallbackRecorder');
+        setMeasurementWarnings(['lowSampleRate']);
         const recorder = getRecorder();
         const timestamp = Date.now();
         const documentPath = `${RNFS.DocumentDirectoryPath}/temp_voice_${timestamp}.wav`;
@@ -635,6 +699,9 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
         }
 
         startAnalysisLoop();
+      } else {
+        setAnalysisMode('streaming');
+        setMeasurementWarnings([]);
       }
 
       setRecordingState('recording');
@@ -644,8 +711,13 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       streamingSessionActiveRef.current = false;
       await stopAnalysisLoop();
       setRecordingState('idle');
+      setAnalysisMode('idle');
+      setMeasurementWarnings([]);
+      Alert.alert('Recording Error', 'Could not start recording. Please try again.');
+    } finally {
+      setIsStarting(false);
     }
-  }, [discardStreamingFile, startAnalysisLoop, startRealtimeStreaming, stopAnalysisLoop]);
+  }, [discardStreamingFile, startAnalysisLoop, startRealtimeStreaming, stopAnalysisLoop, isStarting]);
 
   const pauseRecording = useCallback(async () => {
     if (Platform.OS !== 'web') {
@@ -692,8 +764,12 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
       const streamingActive = await startRealtimeStreaming();
       if (!streamingActive) {
         logger.warn('PCM streaming unavailable on resume, falling back to polling');
+        setAnalysisMode('fallbackRecorder');
+        setMeasurementWarnings(['lowSampleRate']);
         startAnalysisLoop();
       } else {
+        setAnalysisMode('streaming');
+        setMeasurementWarnings([]);
         logger.debug('PCM streaming re-established after resume');
       }
       return;
@@ -715,6 +791,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     recordingFileRef.current = null;
 
     setRecordingState('idle');
+    setAnalysisMode('idle');
+    setMeasurementWarnings([]);
     setCurrentSample(null);
     setDuration(0);
     startTimeRef.current = 0;
@@ -820,11 +898,11 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
             audioUri: savedUri,
             location: locationRef.current
               ? {
-                  latitude: locationRef.current.latitude,
-                  longitude: locationRef.current.longitude,
-                  city: locationRef.current.city,
-                  formattedAddress: locationRef.current.formattedAddress,
-                }
+                latitude: locationRef.current.latitude,
+                longitude: locationRef.current.longitude,
+                city: locationRef.current.city,
+                formattedAddress: locationRef.current.formattedAddress,
+              }
               : undefined,
             averageMetrics,
             averageBrandedMetrics,
@@ -834,7 +912,7 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           });
 
           // Add to baseline and trend tracking (fire and forget)
-          addRecordingToBaseline(newAverageBrandedMetrics).catch(error => 
+          addRecordingToBaseline(newAverageBrandedMetrics).catch(error =>
             logger.error('Failed to add to baseline:', error)
           );
           addToTrendHistory(newAverageBrandedMetrics).catch(error =>
@@ -846,6 +924,15 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
           }, 0);
 
           logger.info('Recording saved, background analysis scheduled:', recordingName);
+
+          try {
+            const recordings = await getAllRecordings();
+            const signals = analyzeRecordingMilestones(recordings);
+            const baselineStatus = await getBaselineStatus();
+            await evaluateProgressNotifications(signals, baselineStatus);
+          } catch (progressError) {
+            logger.debug('Progress notification evaluation failed', progressError);
+          }
         } catch (saveError) {
           logger.error('Failed to save recording:', saveError);
         }
@@ -883,5 +970,8 @@ export function useAudioRecorder(): UseAudioRecorderReturn {
     resumeRecording,
     stopRecording,
     resetRecording,
+    analysisMode,
+    measurementWarnings,
+    isStarting,
   };
 }

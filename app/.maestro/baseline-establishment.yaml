@@ -1,0 +1,47 @@
+appId: com.voiceanalyzer.mobile
+---
+# Test: Baseline Establishment Flow
+# Verifies: Recording 5 sessions to establish baseline
+
+- launchApp:
+    clearState: true
+- assertVisible: "Voice Analyzer"
+
+# Navigate to recording screen
+- tapOn: "Record"
+
+# Record 5 sessions to establish baseline
+- repeat:
+    times: 5
+    commands:
+      # Start recording
+      - tapOn:
+          id: "record-button"
+      - assertVisible: "Live analysis"
+      
+      # Record for 5 seconds
+      - waitForAnimationToEnd:
+          timeout: 5000
+      
+      # Stop recording
+      - tapOn:
+          id: "stop-button"
+      - assertVisible: "Session saved"
+      
+      # Wait for processing
+      - waitForAnimationToEnd:
+          timeout: 2000
+      
+      # Navigate back to start new recording
+      # (Adjust based on actual app flow)
+      - scroll:
+          direction: UP
+      - assertVisible: "Session ready"
+
+# After 5 recordings, verify baseline is established
+- tapOn: "History"
+- assertVisible: "Baseline locked"
+- assertVisible: "Every new session compares to your signature"
+
+# Verify progress indicator shows 100%
+- assertVisible: "5 / 5 sessions logged"

@@ -1,29 +1,59 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
+  Alert,
+  Animated,
+  Image,
 } from 'react-native';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import WaveformView from '../components/WaveformView';
 import RecordingControls from '../components/RecordingControls';
 import { BrandedMetricCard, VoiceIQDisplay } from '../components/BrandedMetricCard';
 import { VoiceSample } from '../types';
-import type { NavigationProp } from '../navigation/SimpleNavigator';
-import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import type { RecorderStackParamList, RootTabParamList } from '../navigation/types';
 import { MaterialCard } from '../components/MaterialCard';
+import { LiquidGlassView } from '../components/LiquidGlassView';
 import { getBaselineStatus, type BaselineStatus } from '../utils/baselineMetrics';
 import { MetricExplanationModal } from '../components/MetricExplanationModal';
 import type { MetricKey } from '../content/metricEducation';
-import { getEmptyStateCopy, getPostRecordingInsight } from '../content/microcopy';
+import {
+  getEmptyStateCopy,
+  getPostRecordingInsight,
+  getMilestoneMessage,
+  getCoachingCopy,
+  type CopyBlock,
+} from '../content/microcopy';
+import {
+  scheduleNotification,
+  buildGentleReminderPayload,
+  buildCelebrationPayload,
+} from '../services/notificationService';
+import { logger } from '../utils/logger';
+import { getAllRecordings } from '../utils/storage';
+import { analyzeRecordingMilestones, selectMilestoneCopyKey, type MilestoneSignals } from '../utils/progressSignals';
+import { LargeTitleHeader } from '../components/LargeTitleHeader';
+import { DesignTokens } from '../design/tokens';
+import { Typography } from '../design/typography';
 
-interface MainRecordingScreenProps {
-  navigation: NavigationProp;
-}
+import SFSymbol from '../components/SFSymbol';
+
+const HERO_ICON = require('../../assets/my-voice.png');
+
+type BehaviorCard = {
+  key: string;
+  copy: CopyBlock;
+  actionLabel?: string;
+  onAction?: () => void;
+  eyebrow?: string;
+};
+
+type MainRecordingScreenProps = NativeStackScreenProps<RecorderStackParamList, 'MainRecording'>;
 
 const SESSION_COPY: Record<
   string,
@@ -52,6 +82,8 @@ const SESSION_COPY: Record<
 };
 
 export default function MainRecordingScreen({ navigation }: MainRecordingScreenProps) {
+  const tabNavigation = navigation.getParent<BottomTabNavigationProp<RootTabParamList>>();
+  const scrollOffsetY = useRef(new Animated.Value(0)).current;
   const {
     recordingState,
     currentSample,
@@ -60,10 +92,15 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
     pauseRecording,
     resumeRecording,
     stopRecording,
+    analysisMode,
+    measurementWarnings,
   } = useAudioRecorder();
 
   const [samples, setSamples] = useState<VoiceSample[]>([]);
   const [baselineStatus, setBaselineStatus] = useState<BaselineStatus | null>(null);
+  const lastNotificationSession = useRef<number | null>(null);
+  const [milestoneCopy, setMilestoneCopy] = useState<CopyBlock | null>(null);
+  const [milestoneSignals, setMilestoneSignals] = useState<MilestoneSignals | null>(null);
 
   const refreshBaselineStatus = useCallback(async () => {
     try {
@@ -113,6 +150,7 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
   const showFirstRecordingCard = baselineStatus?.recordingCount === 0;
   const showBaselineCard =
     Boolean(baselineStatus) && !baselineStatus?.isEstablished && (baselineStatus?.recordingCount ?? 0) > 0;
+  const baselineMilestoneCopy = getMilestoneMessage('baselineComplete');
 
   const openMetricModal = (metricKey: MetricKey, score?: number) => {
     setEducationModal({ metricKey, score });
@@ -120,352 +158,581 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
 
   const closeMetricModal = () => setEducationModal(null);
 
+  const handleStartVocalNap = useCallback(async () => {
+    try {
+      await scheduleNotification({
+        type: 'gentleReminder',
+        title: 'Vocal nap complete',
+        body: 'Ease back in with a light hum when the timer ends.',
+        scheduleAt: Date.now() + 10 * 60 * 1000,
+      });
+      Alert.alert('Timer set', 'We will remind you in 10 minutes.');
+    } catch (error) {
+      logger.debug('Vocal nap timer scheduling failed', error);
+      Alert.alert('Reminder not scheduled', 'Enable notifications to get nap alerts.');
+    }
+  }, []);
+
+  const refreshMilestones = useCallback(async () => {
+    try {
+      const recordings = await getAllRecordings();
+      if (!recordings.length) {
+        setMilestoneCopy(null);
+        setMilestoneSignals(null);
+        return;
+      }
+      const signals = analyzeRecordingMilestones(recordings);
+      setMilestoneSignals(signals);
+      const key = selectMilestoneCopyKey(signals);
+      setMilestoneCopy(key ? getMilestoneMessage(key) : null);
+    } catch (error) {
+      logger.debug('Failed to load milestone signals', error);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshMilestones();
+  }, [recordingState, refreshMilestones]);
+
+  const behaviorCards: BehaviorCard[] = [];
+  const measurementWarningSet = new Set(measurementWarnings);
+
+  if (analysisMode === 'simulated') {
+    behaviorCards.push({
+      key: 'measurementSimulated',
+      copy: getCoachingCopy('measurementSimulated'),
+      eyebrow: 'Measurement quality',
+    });
+  }
+
+  if (measurementWarningSet.has('lowSampleRate')) {
+    behaviorCards.push({
+      key: 'measurementLowSampleRate',
+      copy: getCoachingCopy('measurementLowSampleRate'),
+      eyebrow: 'Measurement quality',
+    });
+  }
+
+  const shouldShowVocalNapCard =
+    recordingState === 'stopped' &&
+    (duration >= 60 || (milestoneSignals?.streakDays ?? 0) >= 3 || (brandedMetrics && brandedMetrics.health < 55));
+  const shouldShowHydrationCard = Boolean(brandedMetrics && brandedMetrics.health < 65);
+  const shouldShowThroatCard = Boolean(brandedMetrics && brandedMetrics.clarity < 55);
+  const shouldWarnWhisper = Boolean(brandedMetrics && brandedMetrics.health < 50);
+
+  if (shouldShowVocalNapCard) {
+    behaviorCards.push({
+      key: 'vocalNap',
+      copy: getCoachingCopy('vocalNap'),
+      actionLabel: 'Start 10-min timer',
+      onAction: handleStartVocalNap,
+    });
+  }
+
+  if (shouldShowHydrationCard) {
+    behaviorCards.push({
+      key: 'hydration',
+      copy: getCoachingCopy('hydrationBoost'),
+    });
+  }
+
+  if (shouldShowThroatCard) {
+    behaviorCards.push({
+      key: 'throatClearing',
+      copy: getCoachingCopy('throatClearing'),
+    });
+  }
+
+  if (shouldWarnWhisper) {
+    behaviorCards.push({
+      key: 'whisperWarning',
+      copy: getCoachingCopy('whisperWarning'),
+    });
+  }
+
+  useEffect(() => {
+    if (recordingState !== 'stopped' || !brandedMetrics) return;
+    const sessionKey = currentSample?.timestamp ?? Date.now();
+    if (lastNotificationSession.current === sessionKey) {
+      return;
+    }
+    lastNotificationSession.current = sessionKey;
+
+    (async () => {
+      try {
+        await scheduleNotification(buildGentleReminderPayload(Date.now()));
+      } catch (error) {
+        logger.debug('Gentle reminder scheduling skipped', error);
+      }
+      if (brandedMetrics.voiceIQ >= 85) {
+        try {
+          await scheduleNotification(buildCelebrationPayload('Voice IQ™', brandedMetrics.voiceIQ));
+        } catch (error) {
+          logger.debug('Celebration notification skipped', error);
+        }
+      }
+    })();
+  }, [recordingState, brandedMetrics, currentSample?.timestamp]);
+
+  const headerActions = (
+    <View style={styles.headerActions}>
+      <TouchableOpacity onPress={() => navigation.navigate('BrandedMetricsDemo')}>
+        <SFSymbol name="sparkles" style={styles.headerIcon} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => tabNavigation?.navigate('NotificationsStack')}>
+        <SFSymbol name="bell" style={styles.headerIcon} />
+      </TouchableOpacity>
+      <TouchableOpacity onPress={() => tabNavigation?.navigate('HistoryStack')}>
+        <SFSymbol name="list.bullet" style={styles.headerIcon} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const heroChips: string[] = [];
+  if (baselineStatus) {
+    heroChips.push(
+      baselineStatus.isEstablished
+        ? 'Baseline locked'
+        : `Baseline ${baselineStatus.recordingCount}/5`,
+    );
+  }
+  heroChips.push(analysisMode === 'simulated' ? 'Simulated metrics' : 'Live analyzer');
+  if (recordingState === 'recording') {
+    heroChips.push('Streaming now');
+  }
+
   return (
     <View style={styles.screen}>
-      <StatusBar barStyle="light-content" translucent />
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.topBar}>
-          <TouchableOpacity
-            style={styles.demoButton}
-            onPress={() => navigation.navigate('BrandedMetricsDemo')}
-          >
-            <Text style={styles.demoButtonText}>✨ Demo</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.notificationsButton}
-            onPress={() => navigation.navigate('NotificationSettings')}
-          >
-            <Text style={styles.notificationsButtonText}>Notifications</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.recordsButton}
-            onPress={() => navigation.navigate('RecordingsList')}
-          >
-            <Text style={styles.recordsButtonText}>Recordings</Text>
-          </TouchableOpacity>
-        </View>
-
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <MaterialCard style={styles.heroCard} variant="regular" tint="rgba(255,255,255,0.78)">
-            <View style={styles.heroEyebrowRow}>
-              <Text style={styles.heroEyebrow}>{sessionCopy.eyebrow}</Text>
-              <View style={styles.heroDot} />
-            </View>
-            <Text style={styles.heroTitle}>Voice Analyzer</Text>
-            <Text style={styles.heroSubtitle}>{sessionCopy.subtitle}</Text>
-            <Text style={styles.heroHelper}>{sessionCopy.helper}</Text>
-          </MaterialCard>
-
-          <MaterialCard
-            style={styles.waveformCard}
-            variant="regular"
-            tint="rgba(255,255,255,0.82)"
-            contentStyle={styles.waveContent}
-          >
-            <Text style={styles.sectionLabel}>Live spectrum</Text>
-            <WaveformView samples={waveformSamples} height={170} />
-          </MaterialCard>
-
-          <RecordingControls
-            recordingState={recordingState}
-            duration={duration}
-            onStart={startRecording}
-            onPause={pauseRecording}
-            onResume={resumeRecording}
-            onStop={stopRecording}
-          />
-
-          {showFirstRecordingCard && (
-            <MaterialCard style={styles.guidanceCard} variant="regular">
-              <Text style={styles.guidanceEyebrow}>Welcome</Text>
-              <Text style={styles.guidanceTitle}>{firstRecordingCopy.title}</Text>
-              <Text style={styles.guidanceBody}>{firstRecordingCopy.body}</Text>
-              {firstRecordingCopy.helper && (
-                <Text style={styles.guidanceHelper}>{firstRecordingCopy.helper}</Text>
-              )}
-            </MaterialCard>
-          )}
-
-          {showBaselineCard && baselineStatus && (
-            <MaterialCard style={styles.guidanceCard} variant="regular">
-              <Text style={styles.guidanceEyebrow}>Baseline progress</Text>
-              <Text style={styles.guidanceTitle}>{baselineCopy.title}</Text>
-              <Text style={styles.guidanceBody}>
-                Record {baselineStatus.remainingCount} more session
-                {baselineStatus.remainingCount !== 1 ? 's' : ''} to lock in your natural range.
-              </Text>
-              {baselineCopy.helper && (
-                <Text style={styles.guidanceHelper}>{baselineCopy.helper}</Text>
-              )}
-              <View style={styles.baselineProgressTrack}>
-                <View
-                  style={[
-                    styles.baselineProgressFill,
-                    { width: `${baselineStatus.progress}%` },
-                  ]}
-                />
+      <StatusBar barStyle={DesignTokens.isDarkMode ? 'light-content' : 'dark-content'} translucent />
+      <LargeTitleHeader
+        title="Record"
+        scrollOffsetY={scrollOffsetY}
+        trailingActions={headerActions}
+      />
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
+        <LiquidGlassView style={styles.heroCard} contentStyle={styles.heroContent}>
+          <View style={styles.heroHeader}>
+            <Image source={HERO_ICON} style={styles.heroIcon} resizeMode="contain" />
+            <View style={styles.heroStatus}>
+              <View style={styles.heroEyebrowRow}>
+                <Text style={styles.heroEyebrow}>{sessionCopy.eyebrow}</Text>
+                <View style={styles.heroDot} />
               </View>
-              <Text style={styles.progressMeta}>
-                {baselineStatus.recordingCount} / 5 sessions logged
-              </Text>
-            </MaterialCard>
+              <Text style={styles.heroTitle}>Voice Analyzer</Text>
+              <Text style={styles.heroSubtitle}>{sessionCopy.subtitle}</Text>
+            </View>
+          </View>
+          <Text style={styles.heroHelper}>{sessionCopy.helper}</Text>
+          {heroChips.length > 0 && (
+            <View style={styles.heroChips}>
+              {heroChips.map((chip) => (
+                <View key={chip} style={styles.heroChip}>
+                  <Text style={styles.heroChipText}>{chip}</Text>
+                </View>
+              ))}
+            </View>
           )}
+        </LiquidGlassView>
 
-          {/* New Branded Metrics Display */}
-          {brandedMetrics && (
-            <View style={styles.section}>
-              <Text style={styles.sectionHeader}>Voice IQ™</Text>
-              <VoiceIQDisplay 
-                score={brandedMetrics.voiceIQ}
-                style={styles.voiceIQCard}
-                onLearnMore={() => openMetricModal('voiceIQ', brandedMetrics.voiceIQ)}
+        <LiquidGlassView style={styles.waveformCard} contentStyle={styles.waveContent}>
+          <Text style={styles.sectionLabel}>Live spectrum</Text>
+          <WaveformView samples={waveformSamples} height={170} />
+        </LiquidGlassView>
+
+        <RecordingControls
+          recordingState={recordingState}
+          duration={duration}
+          onStart={startRecording}
+          onPause={pauseRecording}
+          onResume={resumeRecording}
+          onStop={stopRecording}
+        />
+
+        {showFirstRecordingCard && (
+          <MaterialCard style={styles.guidanceCard} variant="glass-regular">
+            <Text style={styles.guidanceEyebrow}>Welcome</Text>
+            <Text style={styles.guidanceTitle}>{firstRecordingCopy.title}</Text>
+            <Text style={styles.guidanceBody}>{firstRecordingCopy.body}</Text>
+            {firstRecordingCopy.helper && (
+              <Text style={styles.guidanceHelper}>{firstRecordingCopy.helper}</Text>
+            )}
+          </MaterialCard>
+        )}
+
+        {showBaselineCard && baselineStatus && (
+          <MaterialCard style={styles.guidanceCard} variant="glass-regular">
+            <Text style={styles.guidanceEyebrow}>Baseline progress</Text>
+            <Text style={styles.guidanceTitle}>{baselineCopy.title}</Text>
+            <Text style={styles.guidanceBody}>
+              Record {baselineStatus.remainingCount} more session
+              {baselineStatus.remainingCount !== 1 ? 's' : ''} to lock in your natural range.
+            </Text>
+            {baselineCopy.helper && (
+              <Text style={styles.guidanceHelper}>{baselineCopy.helper}</Text>
+            )}
+            <View style={styles.baselineProgressTrack}>
+              <View
+                style={[
+                  styles.baselineProgressFill,
+                  { width: `${baselineStatus.progress}%` },
+                ]}
               />
             </View>
-          )}
+            <Text style={styles.progressMeta}>
+              {baselineStatus.recordingCount} / 5 sessions logged
+            </Text>
+          </MaterialCard>
+        )}
 
-          {brandedMetrics && (
-            <View style={styles.section}>
-              <Text style={styles.sectionHeader}>Vocal Metrics</Text>
-              <View style={styles.metricsGrid}>
-                <BrandedMetricCard
-                  metricName="clarity"
-                  score={brandedMetrics.clarity}
-                  onPress={() => openMetricModal('clarity', brandedMetrics.clarity)}
-                />
-                <BrandedMetricCard
-                  metricName="power"
-                  score={brandedMetrics.power}
-                  onPress={() => openMetricModal('power', brandedMetrics.power)}
-                />
-                <BrandedMetricCard
-                  metricName="health"
-                  score={brandedMetrics.health}
-                  onPress={() => openMetricModal('health', brandedMetrics.health)}
-                />
-                <BrandedMetricCard
-                  metricName="warmth"
-                  score={brandedMetrics.warmth}
-                  onPress={() => openMetricModal('warmth', brandedMetrics.warmth)}
-                />
-                <BrandedMetricCard
-                  metricName="confidence"
-                  score={brandedMetrics.confidence}
-                  onPress={() => openMetricModal('confidence', brandedMetrics.confidence)}
-                />
-                <BrandedMetricCard
-                  metricName="expressiveness"
-                  score={brandedMetrics.expressiveness}
-                  onPress={() =>
-                    openMetricModal('expressiveness', brandedMetrics.expressiveness)
-                  }
-                />
-              </View>
-            </View>
-          )}
+        {baselineStatus?.isEstablished && (
+          <MaterialCard style={styles.guidanceCard} variant="glass-regular">
+            <Text style={styles.guidanceEyebrow}>Milestone</Text>
+            <Text style={styles.guidanceTitle}>{baselineMilestoneCopy.title}</Text>
+            <Text style={styles.guidanceBody}>{baselineMilestoneCopy.body}</Text>
+            {baselineMilestoneCopy.helper && (
+              <Text style={styles.guidanceHelper}>{baselineMilestoneCopy.helper}</Text>
+            )}
+          </MaterialCard>
+        )}
 
-          {recordingState === 'stopped' && postRecordingInsight && (
-            <MaterialCard style={styles.insightCard} variant='regular'>
-              <Text style={styles.insightEyebrow}>Post-recording insight</Text>
-              <Text style={styles.insightTitle}>{postRecordingInsight.title}</Text>
-              <Text style={styles.insightBody}>{postRecordingInsight.body}</Text>
-              {postRecordingInsight.helper && (
-                <Text style={styles.insightHelper}>{postRecordingInsight.helper}</Text>
+        {milestoneCopy && (
+          <MaterialCard style={styles.guidanceCard} variant="glass-regular">
+            <Text style={styles.guidanceEyebrow}>Momentum</Text>
+            <Text style={styles.guidanceTitle}>{milestoneCopy.title}</Text>
+            <Text style={styles.guidanceBody}>{milestoneCopy.body}</Text>
+            {milestoneCopy.helper && (
+              <Text style={styles.guidanceHelper}>{milestoneCopy.helper}</Text>
+            )}
+            {milestoneSignals?.personalBest && milestoneSignals.personalBestValue && (
+              <Text style={styles.guidanceHelper}>
+                Voice IQ™ {milestoneSignals.personalBestValue}
+              </Text>
+            )}
+            {typeof milestoneSignals?.daysSinceLastRecording === 'number' &&
+              milestoneSignals.daysSinceLastRecording >= 5 && (
+                <Text style={styles.guidanceHelper}>
+                  {`It’s been ${milestoneSignals.daysSinceLastRecording} day${
+                    milestoneSignals.daysSinceLastRecording === 1 ? '' : 's'
+                  } since your last check-in.`}
+                </Text>
               )}
-            </MaterialCard>
-          )}
-        </ScrollView>
-        <MetricExplanationModal
-          visible={Boolean(educationModal)}
-          metricKey={educationModal?.metricKey ?? null}
-          score={educationModal?.score}
-          onClose={closeMetricModal}
-        />
-      </SafeAreaView>
+          </MaterialCard>
+        )}
+
+        {behaviorCards.map(renderBehaviorCard)}
+
+        {brandedMetrics && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Voice IQ™</Text>
+            <VoiceIQDisplay
+              score={brandedMetrics.voiceIQ}
+              style={styles.voiceIQCard}
+              onLearnMore={() => openMetricModal('voiceIQ', brandedMetrics.voiceIQ)}
+            />
+          </View>
+        )}
+
+        {brandedMetrics && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Vocal Metrics</Text>
+            <View style={styles.metricsGrid}>
+              <BrandedMetricCard
+                metricName="clarity"
+                score={brandedMetrics.clarity}
+                onPress={() => openMetricModal('clarity', brandedMetrics.clarity)}
+              />
+              <BrandedMetricCard
+                metricName="power"
+                score={brandedMetrics.power}
+                onPress={() => openMetricModal('power', brandedMetrics.power)}
+              />
+              <BrandedMetricCard
+                metricName="health"
+                score={brandedMetrics.health}
+                onPress={() => openMetricModal('health', brandedMetrics.health)}
+              />
+              <BrandedMetricCard
+                metricName="warmth"
+                score={brandedMetrics.warmth}
+                onPress={() => openMetricModal('warmth', brandedMetrics.warmth)}
+              />
+              <BrandedMetricCard
+                metricName="confidence"
+                score={brandedMetrics.confidence}
+                onPress={() => openMetricModal('confidence', brandedMetrics.confidence)}
+              />
+              <BrandedMetricCard
+                metricName="expressiveness"
+                score={brandedMetrics.expressiveness}
+                onPress={() =>
+                  openMetricModal('expressiveness', brandedMetrics.expressiveness)
+                }
+              />
+            </View>
+          </View>
+        )}
+
+        {recordingState === 'stopped' && postRecordingInsight && (
+          <MaterialCard style={styles.insightCard} variant="solid-flat">
+            <Text style={styles.insightEyebrow}>Post-recording insight</Text>
+            <Text style={styles.insightTitle}>{postRecordingInsight.title}</Text>
+            <Text style={styles.insightBody}>{postRecordingInsight.body}</Text>
+            {postRecordingInsight.helper && (
+              <Text style={styles.insightHelper}>{postRecordingInsight.helper}</Text>
+            )}
+          </MaterialCard>
+        )}
+      </Animated.ScrollView>
+      <MetricExplanationModal
+        visible={Boolean(educationModal)}
+        metricKey={educationModal?.metricKey ?? null}
+        score={educationModal?.score}
+        onClose={closeMetricModal}
+      />
     </View>
   );
 }
 
+const renderTags = (tags: string[]) => (
+  <View style={styles.tagRow}>
+    {tags.map(tag => (
+      <View key={tag} style={styles.tagChip}>
+        <Text style={styles.tagText}>{tag}</Text>
+      </View>
+    ))}
+  </View>
+);
+
+const renderBehaviorCard = (card: BehaviorCard) => (
+  <MaterialCard key={card.key} variant="glass-regular" style={styles.guidanceCard}>
+    <Text style={styles.guidanceEyebrow}>{card.eyebrow ?? 'Care tip'}</Text>
+    <Text style={styles.guidanceTitle}>{card.copy.title}</Text>
+    <Text style={styles.guidanceBody}>{card.copy.body}</Text>
+    {card.copy.helper && <Text style={styles.guidanceHelper}>{card.copy.helper}</Text>}
+    {card.copy.tags && renderTags(card.copy.tags)}
+    {card.onAction && card.actionLabel && (
+      <TouchableOpacity style={styles.actionButton} onPress={card.onAction}>
+        <Text style={styles.actionButtonText}>{card.actionLabel}</Text>
+      </TouchableOpacity>
+    )}
+  </MaterialCard>
+);
+
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: DesignTokens.colors.bgPrimary,
   },
-  safeArea: {
-    flex: 1,
-  },
-  topBar: {
+  headerActions: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    gap: DesignTokens.spacing.md,
   },
-  demoButton: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,215,0,0.3)',
-    backgroundColor: 'rgba(255,215,0,0.15)',
-  },
-  demoButtonText: {
-    fontSize: 15,
-    color: '#FFD700',
-    fontWeight: '600',
-  },
-  recordsButton: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(0,0,0,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.7)',
-  },
-  recordsButtonText: {
-    fontSize: 15,
-    color: COLORS.label,
-    fontWeight: '600',
-  },
-  notificationsButton: {
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(36,107,253,0.25)',
-    backgroundColor: 'rgba(36,107,253,0.08)',
-  },
-  notificationsButtonText: {
-    fontSize: 15,
-    color: COLORS.tintColor,
-    fontWeight: '600',
+  headerIcon: {
+    fontSize: 22,
+    color: DesignTokens.colors.tint,
   },
   scrollContent: {
-    paddingBottom: SPACING.xxl,
-    gap: SPACING.lg,
+    paddingTop: 120, // HEADER_MAX_HEIGHT
+    paddingBottom: DesignTokens.spacing.xl,
+    gap: DesignTokens.spacing.lg,
   },
   heroCard: {
-    marginHorizontal: SPACING.md,
+    marginHorizontal: DesignTokens.spacing.md,
+  },
+  heroContent: {
+    gap: DesignTokens.spacing.sm,
+  },
+  heroHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: DesignTokens.spacing.md,
+  },
+  heroIcon: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    shadowColor: 'rgba(23,115,255,0.6)',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+  },
+  heroStatus: {
+    flex: 1,
+    gap: DesignTokens.spacing.xs,
   },
   heroEyebrowRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.xs,
+    gap: DesignTokens.spacing.xs,
   },
   heroEyebrow: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
     letterSpacing: 1,
   },
   heroDot: {
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: COLORS.primary,
+    backgroundColor: DesignTokens.colors.clarity,
   },
   heroTitle: {
-    ...TYPOGRAPHY.largeTitle,
-    color: COLORS.label,
-    marginTop: 8,
+    ...Typography.title2,
+    color: DesignTokens.colors.textPrimary,
   },
   heroSubtitle: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.label,
-    marginTop: 8,
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
   },
   heroHelper: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
     marginTop: 4,
   },
+  heroChips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.xs,
+    marginTop: DesignTokens.spacing.xs,
+  },
+  heroChip: {
+    paddingHorizontal: DesignTokens.spacing.sm,
+    paddingVertical: DesignTokens.spacing.xxs,
+    borderRadius: DesignTokens.radii.pill,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+  },
+  heroChipText: {
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
+  },
   waveformCard: {
-    marginHorizontal: SPACING.md,
+    marginHorizontal: DesignTokens.spacing.md,
   },
   waveContent: {
     gap: 12,
     paddingBottom: 4,
   },
   sectionLabel: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   guidanceCard: {
-    marginHorizontal: SPACING.md,
-    gap: SPACING.xs,
+    marginHorizontal: DesignTokens.spacing.md,
+    gap: DesignTokens.spacing.xs,
   },
   guidanceEyebrow: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   guidanceTitle: {
-    ...TYPOGRAPHY.title3,
-    color: COLORS.label,
+    ...Typography.title2,
+    color: DesignTokens.colors.textPrimary,
   },
   guidanceBody: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.secondaryLabel,
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
   },
   guidanceHelper: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
+  },
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: DesignTokens.spacing.xs,
+    marginTop: DesignTokens.spacing.xs,
+  },
+  tagChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: DesignTokens.radii.pill,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+  },
+  tagText: {
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
+    fontSize: 10,
+    letterSpacing: 0.5,
+  },
+  actionButton: {
+    marginTop: DesignTokens.spacing.sm,
+    alignSelf: 'flex-start',
+    paddingHorizontal: DesignTokens.spacing.md,
+    paddingVertical: DesignTokens.spacing.xs,
+    borderRadius: DesignTokens.radii.pill,
+    backgroundColor: DesignTokens.colors.tint,
+  },
+  actionButtonText: {
+    ...Typography.caption1,
+    color: '#fff',
+    fontWeight: '600',
   },
   baselineProgressTrack: {
     height: 6,
-    backgroundColor: 'rgba(142,142,147,0.2)',
-    borderRadius: 999,
+    backgroundColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+    borderRadius: DesignTokens.radii.pill,
     overflow: 'hidden',
-    marginTop: SPACING.sm,
+    marginTop: DesignTokens.spacing.sm,
   },
   baselineProgressFill: {
     height: '100%',
-    backgroundColor: COLORS.tintColor,
-    borderRadius: 999,
+    backgroundColor: DesignTokens.colors.tint,
+    borderRadius: DesignTokens.radii.pill,
   },
   progressMeta: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
-    marginTop: SPACING.xs,
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
+    marginTop: DesignTokens.spacing.xs,
   },
   section: {
-    gap: SPACING.sm,
+    gap: DesignTokens.spacing.sm,
   },
   sectionHeader: {
-    ...TYPOGRAPHY.title2,
-    color: COLORS.label,
-    paddingHorizontal: SPACING.md,
+    ...Typography.title2,
+    color: DesignTokens.colors.textPrimary,
+    paddingHorizontal: DesignTokens.spacing.md,
   },
   voiceIQCard: {
-    marginHorizontal: SPACING.md,
+    marginHorizontal: DesignTokens.spacing.md,
   },
   metricsGrid: {
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.md,
+    gap: DesignTokens.spacing.md,
+    paddingHorizontal: DesignTokens.spacing.md,
   },
   insightCard: {
-    marginHorizontal: SPACING.md,
-    gap: SPACING.xs,
+    marginHorizontal: DesignTokens.spacing.md,
+    gap: DesignTokens.spacing.xs,
   },
   insightEyebrow: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
     letterSpacing: 1,
     textTransform: 'uppercase',
   },
   insightTitle: {
-    ...TYPOGRAPHY.title3,
-    color: COLORS.label,
+    ...Typography.title2,
+    color: DesignTokens.colors.textPrimary,
   },
   insightBody: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.secondaryLabel,
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
   },
   insightHelper: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
   },
 });

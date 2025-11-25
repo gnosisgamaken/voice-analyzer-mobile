@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import type { HapticFeedbackTypes } from 'react-native-haptic-feedback';
 import Slider from '@react-native-community/slider';
 import { PlaybackState } from '../hooks/useAudioPlayer';
 import { formatDuration } from '../utils/formatting';
-import { triggerHaptic } from '../utils/haptics';
+import { useHaptics } from '../hooks/useHaptics';
 
 interface PlaybackControlsProps {
   playbackState: PlaybackState;
@@ -27,6 +26,7 @@ export default function PlaybackControls({
 }: PlaybackControlsProps) {
   const [isSeeking, setIsSeeking] = useState(false);
   const [seekPosition, setSeekPosition] = useState(0);
+  const haptics = useHaptics();
 
   const displayPosition = isSeeking ? seekPosition : position;
 
@@ -37,7 +37,7 @@ export default function PlaybackControls({
   }, [position, isSeeking]);
 
   const handlePlayPause = async () => {
-    triggerHaptic('impactMedium' as HapticFeedbackTypes);
+    haptics.impactMedium();
     if (playbackState === 'playing') {
       onPause();
     } else {
@@ -46,7 +46,7 @@ export default function PlaybackControls({
   };
 
   const handleStop = async () => {
-    triggerHaptic('impactMedium' as HapticFeedbackTypes);
+    haptics.selection();
     onStop();
   };
 

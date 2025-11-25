@@ -43,5 +43,10 @@ export const logger = {
       console.error(`[ERROR] ${message}`, ...args);
     }
   },
+
+  // For testing feedback
+  test: (message: string, data?: any) => {
+    console.log(`[TEST_LOG] ${message}`, data ? JSON.stringify(data, null, 2) : '');
+  }
 };
 

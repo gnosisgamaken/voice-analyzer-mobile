@@ -8,7 +8,8 @@ import {
   Pressable,
   Platform,
 } from 'react-native';
-import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
+import { DesignTokens } from '../design/tokens';
+import { Typography } from '../design/typography';
 import { MetricKey, metricEducationContent } from '../content/metricEducation';
 import { getBrandedMetricDetails } from '../utils/brandedMetricsEngine';
 
@@ -143,10 +144,10 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
   },
   sheetContainer: {
-    backgroundColor: COLORS.secondaryBackground,
+    backgroundColor: DesignTokens.colors.bgCard,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
-    paddingBottom: Platform.select({ ios: SPACING.xxl, android: SPACING.lg }),
+    paddingBottom: Platform.select({ ios: DesignTokens.spacing.xl, android: DesignTokens.spacing.lg }),
     maxHeight: '90%',
   },
   handle: {
@@ -155,17 +156,17 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     backgroundColor: 'rgba(0,0,0,0.15)',
     alignSelf: 'center',
-    marginVertical: SPACING.sm,
+    marginVertical: DesignTokens.spacing.sm,
   },
   content: {
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.xl,
-    gap: SPACING.md,
+    paddingHorizontal: DesignTokens.spacing.lg,
+    paddingBottom: DesignTokens.spacing.xl,
+    gap: DesignTokens.spacing.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.md,
+    gap: DesignTokens.spacing.md,
   },
   iconBadge: {
     width: 52,
@@ -182,18 +183,18 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   eyebrow: {
-    ...TYPOGRAPHY.caption,
+    ...Typography.caption1,
     letterSpacing: 1,
     textTransform: 'uppercase',
-    color: COLORS.secondaryLabel,
+    color: DesignTokens.colors.textSecondary,
   },
   title: {
-    ...TYPOGRAPHY.title2,
-    color: COLORS.label,
+    ...Typography.title2,
+    color: DesignTokens.colors.textPrimary,
   },
   headline: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.secondaryLabel,
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
   },
   scorePill: {
     borderWidth: 1,
@@ -209,29 +210,30 @@ const styles = StyleSheet.create({
     lineHeight: 26,
   },
   scoreSuffix: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
   },
   summary: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.label,
+    ...Typography.body,
+    color: DesignTokens.colors.textPrimary,
   },
   section: {
-    gap: SPACING.xs,
+    gap: DesignTokens.spacing.xs,
   },
   sectionTitle: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.label,
+    ...Typography.title2,
+    fontSize: 18, // headline equivalent
+    color: DesignTokens.colors.textPrimary,
   },
   body: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.secondaryLabel,
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
     lineHeight: 22,
   },
   bulletRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: SPACING.sm,
+    gap: DesignTokens.spacing.sm,
     paddingVertical: 4,
   },
   bulletDot: {
@@ -241,28 +243,28 @@ const styles = StyleSheet.create({
     marginTop: 7,
   },
   useCases: {
-    gap: SPACING.sm,
+    gap: DesignTokens.spacing.sm,
   },
   useCaseCard: {
-    padding: SPACING.md,
+    padding: DesignTokens.spacing.md,
     borderRadius: 16,
     backgroundColor: 'rgba(118,118,128,0.08)',
     gap: 4,
   },
   useCaseTitle: {
-    ...TYPOGRAPHY.headline,
+    ...Typography.title2,
     fontSize: 16,
-    color: COLORS.label,
+    color: DesignTokens.colors.textPrimary,
   },
   footerCard: {
-    marginTop: SPACING.sm,
+    marginTop: DesignTokens.spacing.sm,
     borderRadius: 18,
-    padding: SPACING.md,
+    padding: DesignTokens.spacing.md,
     backgroundColor: 'rgba(118,118,128,0.08)',
     gap: 6,
   },
   footerLabel: {
-    ...TYPOGRAPHY.caption,
+    ...Typography.caption1,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1,

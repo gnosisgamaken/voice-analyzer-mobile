@@ -1,8 +1,8 @@
 # 🗺️ Voice Analyzer - Master Execution Roadmap
 
-**Status:** Strategic Planning & Next Steps  
-**Date:** November 16, 2025  
-**Context:** Clean codebase, clear vision, ready to execute
+**Status:** Phase 1 complete; entering Liquid Glass + precision pass  
+**Date:** November 17, 2025  
+**Context:** Audio + metrics stack running; engagement layer and design polish underway
 
 ---
 
@@ -82,37 +82,55 @@
 - 4 clean commits on GitHub
 
 **2. Core Architecture**
-- ✅ React Native with TypeScript
-- ✅ Audio recording working
-- ✅ MaterialCard component (pre-Liquid Glass)
-- ✅ 3 screens (Recording, List, Details)
-- ✅ Navigation system
-- ✅ Storage utilities
+- ✅ React Native + TypeScript app shell
+- ✅ Audio recorder + baseline PCM streamer with simulated fallback
+- ✅ Branded metrics engine + Voice IQ wired into recorder, list, details
+- ✅ Historical tracking (baseline + trends) + insights engine output
+- ✅ Liquid Glass base components (MaterialCard glass variant, LiquidGlassView)
+- ✅ Notification preferences + progress notification service scaffolding
 
-**3. Current Work In Progress**
+**3. Knowledge & Content System**
+- ✅ Atomic Habits, Made to Stick, Vocal Athlete, and hygiene schemas documented in `/docs`
+- ✅ Microcopy system pulling from schemas (hydration, vocal naps, whisper warnings, streak messaging)
+
+**4. Current Work In Progress**
 ```
 Modified files:
-- app/src/hooks/useAudioRecorder.ts (audio foundation)
-- app/src/types/index.ts (type definitions)
-- app/ios/VoicePCMStreamer.m (native audio module)
-- app/package.json (dependencies)
+- app/src/content/microcopy.ts (schema-driven prompts)
+- app/src/screens/MainRecordingScreen.tsx (Liquid Glass + care tips)
+- app/src/screens/RecordingsListScreen.tsx (milestone + care cards)
+- app/src/screens/RecordingDetailsScreen.tsx (measurement integrity notices)
+- app/src/components/MaterialCard.tsx / LiquidGlassView.tsx (design system)
+- app/src/services/progressNotifications.ts (milestone nudges)
 ```
 
-**4. Existing Metrics (need rebranding)**
-- Brightness → Maps to Clarity
-- Clarity → Maps to Clarity  
-- Richness → Maps to Warmth
-- Energy → Maps to Power
-- Pitch Stability → Maps to Confidence/Health
+**5. Missing / Next Components**
+- Native PCM streaming via Expo Module (replace simulated analysis path)
+- Audio QA: sampling-rate + quantization enforcement, perturbation confidence flagging
+- Liquid Glass application across remaining surfaces (lists, modals, nav chrome)
+- Shareable branded metric cards + engagement/social layer
+- Smart notification triggers (baseline lock-in, long gap, streak wins)
+- Knowledge integration into insights (SUCCESs tags, habit stacks, identity prompts)
 
-**5. Missing Components**
-- Warmth metric calculation
-- Expressiveness metric calculation
-- Vocal Health (jitter/shimmer/HNR)
-- Voice IQ composite
-- Liquid Glass design system
-- Historical tracking
-- Insights engine
+**Immediate Next Steps (Current Sprint)**
+1. **Stabilize and QA the native PCM streamer module:**
+    - Perform thorough testing on a range of iOS and Android devices.
+    - Validate audio quality, latency, and stability.
+    - Ensure the module handles various scenarios, such as background recording and Bluetooth microphone input.
+2. **Implement measurement integrity warnings:**
+    - Surface warnings to the user when audio quality is compromised (e.g., low sampling rate, high noise levels).
+    - Gate UI affordances based on data quality.
+3. **Refine calibration helpers:**
+    - Improve the microphone distance coach and Bluetooth quality warnings.
+4. Extend Liquid Glass design system to Recordings List, Details, modals, and navigation.
+5. Surface schema-driven care tips (hydration, vocal naps, whisper warnings) everywhere insights live.
+6. Tag insights/notifications with SUCCESs + Four Law metadata; prepare shareable card templates.
+
+---
+##  Audit Findings & Technical Debt
+This section tracks technical findings and areas for improvement identified during the audit.
+
+*   **Duplicate Metrics Engine File:** A file named `brandedMetricsEngine 2.ts` was found in `app/src/utils`. This file appears to be an older, experimental version of the metrics engine and is not used in the application. It should be removed to avoid confusion and clutter.
 
 ---
 
@@ -140,173 +158,45 @@ Modified files:
 
 ---
 
-## 📅 12-Week Implementation Timeline
+## 🚀 Forward Plan – Codex 5.1 Execution Track
 
-### Phase 1: Foundation (Week 1-2) ⚡ CRITICAL PATH
+The cleanup-era 12-week outline served its purpose. With Codex 5.1 steering implementation, we’re moving to four aggressive, end-to-end sprints that reflect today’s architecture, design spec, and native audio requirements. Each sprint ends with a demo build, QA notes, and roadmap update.
 
-**Goal:** Audio recording stable, 6 branded metrics calculating correctly.
+### Sprint 1 (Week 0-1) – Design System & Navigation Hardening
+**Objective:** make the UI unambiguously iOS-native so every future feature composes cleanly.
 
-#### Week 1: Audio Foundation & Commit Current Work
+- Implement the `designTokens` module + theme provider (colors, spacing, radii, typography) exactly as defined in `docs/IOS_NATIVE_INTERFACE_SPEC.md`; refactor MaterialCard, LiquidGlass shells, and typography helpers to consume it.
+- Build a reusable Large Title header (Liquid Glass blur, collapse-on-scroll, SF Symbol buttons) and retrofit Recorder, Recordings, and Notification screens.
+- Decide on React Navigation adoption vs. extending `AppNavigator`; either way, deliver gesture support, per-screen options, and deep-link ready routing.
+- **Exit:** the core screens render with the new tokens, headers, and haptic-aware tab bar, with Storybook/Playroom snapshots documenting the component library.
 
-**Tasks:**
-1. ✅ **Commit current audio work**
-   ```bash
-   git add app/src/hooks/useAudioRecorder.ts
-   git add app/src/types/index.ts
-   git add app/ios/VoicePCMStreamer.m
-   git add app/package.json
-   git commit -m "feat: enhance audio streaming with native PCM handler"
-   git push origin main
-   ```
+**Status (Dec 2025):** Design tokens, Liquid Glass components, LargeTitleHeader, and the dev gallery are live (Gemini). React Navigation migration plus tab-bar integration is in progress (Codex) and replaces the temporary custom navigator.
 
-2. **Complete real-time audio streaming** (if needed)
-   - Test VoicePCMStreamer on real device
-   - Ensure 44.1kHz sampling works
-   - Handle audio interruptions (calls, other apps)
-   - Verify background recording permissions
+### Sprint 2 (Week 1-2.5) – Native Audio Pipeline & Measurement Integrity
+**Objective:** replace simulated metrics with deterministic, clinically trustworthy capture.
 
-3. **Extract basic acoustic features**
-   - RMS energy (for Power)
-   - Pitch detection (for Confidence/Expressiveness)
-   - Spectral centroid (for Clarity)
-   - Zero-crossing rate (for Health)
+- Ship the Expo Modules AVAudioEngine bridge (measurement mode, 128–256 frame buffers, float PCM payloads, background audio entitlement) plus Android `AudioRecord` parity.
+- Rewire `useAudioRecorder` to prioritize the native module, emit clear measurement states (streaming, fallback, simulated), and gate UI affordances based on data quality.
+- Add calibration helpers (mic-distance coach, Bluetooth quality warnings), update waveform/live metrics to read from true PCM frames, and write QA scripts for latency + noise benchmarking.
+- **Exit:** on-device recordings produce reproducible Voice IQ/metrics, UI shows measurement integrity cards, and we have logs for QA sign-off.
 
-4. **Device testing**
-   - Test on iPhone 12, 13, 14, 15
-   - Verify microphone permissions flow
-   - Check audio quality with different environments
+### Sprint 3 (Week 2.5-3.5) – Insights, Notifications, Shareable Moments
+**Objective:** turn raw data into a living companion loop.
 
-**Deliverable:** Recording works reliably, basic features extracting.
+- Finish the insights engine + SUCCESs tagging, render Insight/Behavior cards via the new components, and thread schema-driven care tips into Recorder/Details/List surfaces.
+- Wire the notification pipeline end-to-end (`notificationService`, `notificationTracker`, Notification Settings UI) so users can choose cadence and content.
+- Build shareable Voice IQ cards (solid material, brand palette) and milestone haptics/animations for baselines, streaks, and care prompts.
+- **Exit:** each recording generates insights + optional notification, shareable cards export correctly, and telemetry captures engagement.
 
-#### Week 2: Six Branded Metrics Engine
+### Sprint 4 (Week 3.5-4.5) – QA, Accessibility, Launch Readiness
+**Objective:** freeze MVP quality and prep App Store deliverables.
 
-**Create:** `app/src/utils/brandedMetricsEngine.ts`
+- Execute a full accessibility pass: VoiceOver labels/hints, rotor navigation for recordings, Dynamic Type up to AX XXL, Reduce Motion/Transparency fallbacks, Increase Contrast review.
+- Run device matrix + regression suite (iPhone 12–15, wired/Bluetooth/built-in mics, background recording, notification reliability, shareable export) and document findings.
+- Produce App Store assets (screenshots/video featuring Liquid Glass UI, care loops, insights) and finalize privacy/clinical statements and release notes.
+- **Exit:** signed-off MVP build with QA report, telemetry hooks, and store package ready for submission.
 
-**Implement calculations for:**
-
-1. **💎 Voice Clarity**
-   ```typescript
-   // Weighted: 40% spectral centroid + 30% flatness + 30% HNR
-   clarity = normalize(
-     spectralCentroid * 0.4 + 
-     (1 - spectralFlatness) * 0.3 + 
-     HNR * 0.3
-   )
-   ```
-
-2. **⚡ Vocal Power**
-   ```typescript
-   // RMS energy + dynamic range
-   power = normalize(
-     (rms_dB + 80) / 80 * dynamicRangeFactor
-   )
-   ```
-
-3. **❤️ Vocal Health**
-   ```typescript
-   // Jitter, shimmer, HNR
-   health = (
-     (100 - jitter * 1000) * 0.4 +
-     (100 - shimmer * 100) * 0.4 +
-     HNR / 20 * 0.2
-   )
-   ```
-
-4. **☀️ Warmth**
-   ```typescript
-   // Formants (F1/F2), spectral slope
-   warmth = 
-     F1_lowness * 0.5 +
-     spectralSlope_gentleness * 0.3 +
-     MFCC_richness * 0.2
-   ```
-
-5. **👑 Confidence**
-   ```typescript
-   // Pitch stability + resonance
-   confidence = 
-     pitchStability * 0.5 +
-     resonanceStrength * 0.3 +
-     speechFluency * 0.2
-   ```
-
-6. **🔥 Expressiveness**
-   ```typescript
-   // Pitch range + variance
-   expressiveness = 
-     pitchRange / 100 * 40 +
-     intensityVariance * 30 +
-     tempoVariability * 30
-   ```
-
-**Voice IQ Composite:**
-```typescript
-voiceIQ = (
-  clarity * 0.20 +
-  power * 0.15 +
-  health * 0.20 +
-  warmth * 0.15 +
-  confidence * 0.15 +
-  expressiveness * 0.15
-) + consistencyBonus
-```
-
-**Testing:**
-- Unit tests for each metric
-- Test with sample audio files
-- Calibrate normalization ranges
-- Verify metrics make intuitive sense
-
-**Deliverable:** All 6 metrics + Voice IQ calculating accurately.
-
----
-
-### Phase 2: Core UX (Week 3-4) 🎨 FIRST USER VALUE
-
-**Goal:** User sees branded metrics, Voice IQ, and understands their voice.
-
-#### Week 3: Branded Metrics UI Components
-
-**Create components:**
-
-1. **BrandedMetricCard** (`app/src/components/BrandedMetricCard.tsx`)
-   ```typescript
-   interface BrandedMetricCardProps {
-     icon: string;        // 💎, ⚡, ❤️, ☀️, 👑, 🔥
-     name: string;        // "Voice Clarity"
-     value: number;       // 0-100
-     label: string;       // "Very Clear", "Good", etc.
-     color: string;       // Metric brand color
-     trend?: number;      // +5, -3, etc. (vs baseline)
-   }
-   ```
-   - Icon + name in header
-   - Large score number (48pt, bold)
-   - Qualitative label (color-coded)
-   - Progress bar (0-100)
-   - Optional trend indicator
-
-2. **VoiceIQDisplay** (`app/src/components/VoiceIQDisplay.tsx`)
-   - Hero treatment (large card)
-   - Circular progress indicator (120pt)
-   - Voice IQ™ score (64pt, bold)
-   - Qualitative descriptor
-   - "Learn more" tap → explanation
-
-**Update screens:**
-
-- **MainRecordingScreen:**
-  - Show 6 metric cards in 2x3 grid
-  - Voice IQ at top (hero position)
-  - Session info card with copywriting: "Ready. Speak at your natural pace."
-
-- **RecordingDetailsScreen:**
-  - Same 6 metrics + Voice IQ
-  - Historical comparison if available
-  - Copywriting: "Great work. Review your insights below."
-
-**Copywriting integration (from UX doc):**
-- Use invitational tone: "Want to see what's changed?"
+**Operating Rhythm:** backlog grooming happens continuously; Codex 5.1 owns sprint planning, demo notes, and roadmap updates. Every sprint delivers a working build plus documentation so parallel teams (science, content, growth) can integrate without friction.
 - Frame low scores as opportunity: "Your steadiness is lower than usual. Rest could help."
 - Highlight improvements: "Your clarity is up 8 points. Whatever you're doing is working."
 
@@ -637,7 +527,7 @@ git commit -m "feat: enhance audio streaming with native PCM handler
 git push origin main
 ```
 
-**Priority 2: Create Branded Metrics Engine** 🎯
+**Priority 2: Create Branded Metrics Engine** 🎯 *(actively maintained — calculations live in `src/utils/brandedMetricsEngine.ts`)*
 
 ```bash
 # Create new file
@@ -650,16 +540,11 @@ touch src/utils/brandedMetricsEngine.ts
 # - Export interface
 ```
 
-**Priority 3: Test Metrics with Sample Audio** 🧪
+**Priority 3: Test Metrics with Sample Audio** 🧪 ✅ *(Nov 17, 2025)*
 
-```bash
-# Create test suite
-touch src/utils/__tests__/brandedMetricsEngine.test.ts
-
-# Add sample audio files
-# Test each metric calculation
-# Verify Voice IQ composite
-```
+- Added reference WAV fixtures in `app/assets/sample-audio/steady_tone.wav` and `expressive_phrase.wav` for manual QA.
+- Created Jest coverage in `src/utils/__tests__/brandedMetricsEngine.test.ts` that validates all six branded metrics, clamps scores to 0-100, and exercises the Voice IQ™ consistency bonus.
+- Updated `brandedMetricsEngine.ts` with a shared clamp helper so every metric + composite stays inside the clinical normalization window.
 
 ---
 
@@ -778,6 +663,41 @@ From all three documents, these principles are non-negotiable:
 
 **The North Star:**
 > "The app doesn't compete with iOS for attention – it rests on iOS like a precision instrument on a glass table." 🪟
+
+---
+## 🌠 North Star Vision: The Resilient Audio Pipeline
+
+Beyond the current roadmap, we envision a future-proof architecture that embodies our "Swiss-watch precision" philosophy at the system level. This is a long-term goal that would make our app a joy to develop and a benchmark for reliability.
+
+**Concept:** A "self-healing" audio pipeline that assumes failure is inevitable and gracefully recovers from it.
+
+**Core Components:**
+
+1.  **Transactional Audio Journaling:**
+    *   Instead of a monolithic recording file, we capture a stream of small, annotated data packets (PCM chunk, metadata, checksum).
+    *   These packets are immediately written to an append-only log on disk. This journal is the single source of truth.
+    *   **Result:** Zero data loss, even if the app crashes mid-recording.
+
+2.  **Asynchronous, Idempotent Analysis:**
+    *   The metrics engine operates on the journal, not the live stream.
+    *   Analysis is a background process that can be safely interrupted and restarted.
+    *   It can flag and adapt to corrupted data or changes in audio source mid-stream.
+    *   **Result:** A robust, decoupled analysis process that doesn't block the UI.
+
+3.  **Automatic Recovery:**
+    *   On app launch, the system checks for incomplete journals.
+    *   It automatically finishes processing the analysis in the background.
+    *   The user is notified that their interrupted recording was saved.
+    *   **Result:** A magical user experience that builds immense trust.
+
+**Why This Matters (The "Tears of Happiness" Factor):**
+
+*   **For the User:** Their effort is never wasted. The app just *works*, even when things go wrong.
+*   **For the Architect:** It replaces a fragile, complex state machine with a clean, predictable data flow. It's an elegant solution to a whole class of messy problems.
+*   **For the Developer:** It makes debugging a dream. Instead of trying to reproduce bugs, we can replay the *exact* data from the user's device. It reduces the maintenance burden of supporting new hardware.
+*   **For the Company:** It creates a powerful competitive advantage: the most reliable and trustworthy audio analysis app on the market. It's a deep investment in quality that pays off for years.
+
+This is the kind of "secret weapon" that doesn't show up in a feature list but is felt in the app's flawless performance and the development team's high velocity and morale.
 
 ---
 

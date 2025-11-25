@@ -1,18 +1,18 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  SafeAreaView,
   ScrollView,
   TouchableOpacity,
   StatusBar,
   Switch,
+  Platform,
+  Animated,
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { MaterialCard } from '../components/MaterialCard';
-import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
-import type { NavigationProp } from '../navigation/SimpleNavigator';
+import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -23,6 +23,12 @@ import {
   type NotificationPreferences,
   type ScheduledNotification,
 } from '../services/notificationService';
+import { LargeTitleHeader } from '../components/LargeTitleHeader';
+import { DesignTokens } from '../design/tokens';
+import { Typography } from '../design/typography';
+
+import SFSymbol from '../components/SFSymbol';
+import type { NotificationsStackParamList } from '../navigation/types';
 
 type FrequencyOption = NotificationPreferences['frequency'];
 
@@ -32,9 +38,7 @@ const FREQUENCY_OPTIONS: Array<{ label: string; value: FrequencyOption; helper: 
   { label: 'Off', value: 'off', helper: 'Silence all notifications' },
 ];
 
-interface NotificationSettingsScreenProps {
-  navigation: NavigationProp;
-}
+type NotificationSettingsScreenProps = NativeStackScreenProps<NotificationsStackParamList, 'NotificationSettings'>;
 
 export default function NotificationSettingsScreen({ navigation }: NotificationSettingsScreenProps) {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
@@ -42,6 +46,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
   const [systemSettings, setSystemSettings] = useState<string>('Unknown');
   const [permissionLabel, setPermissionLabel] = useState('Status unknown');
   const [loading, setLoading] = useState(true);
+  const scrollOffsetY = useRef(new Animated.Value(0)).current; // Static header offset
 
   const loadData = useCallback(async () => {
     try {
@@ -96,28 +101,31 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
 
   if (!preferences) {
     return (
-      <SafeAreaView style={styles.loadingContainer}>
-        <StatusBar barStyle="dark-content" translucent />
+      <View style={styles.loadingContainer}>
+        <StatusBar barStyle={DesignTokens.isDarkMode ? 'light-content' : 'dark-content'} translucent />
         <Text style={styles.loadingText}>{loading ? 'Loading preferences…' : 'Unable to load preferences'}</Text>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" translucent />
-      <View style={styles.topBar}>
-        <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-        <Text style={styles.topTitle}>Notifications</Text>
-      </View>
-
+    <View style={styles.container}>
+      <StatusBar barStyle={DesignTokens.isDarkMode ? 'light-content' : 'dark-content'} translucent />
+      <LargeTitleHeader
+        title="Notifications"
+        scrollOffsetY={scrollOffsetY}
+        leadingIcon={
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <SFSymbol name="chevron.backward" style={styles.backButtonIcon} />
+            <Text style={styles.backButtonText}>Back</Text>
+          </TouchableOpacity>
+        }
+      />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <MaterialCard style={styles.card} variant="regular">
+        <MaterialCard style={styles.card} variant="solid-elevated">
           <Text style={styles.sectionTitle}>Smart nudges</Text>
           <Text style={styles.sectionHelper}>Value-forward reminders tailored to your sessions</Text>
           <View style={styles.row}>
@@ -125,8 +133,9 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
             <Switch
               value={preferences.enabled}
               onValueChange={handleToggleEnabled}
-              thumbColor={preferences.enabled ? COLORS.tintColor : '#f4f3f4'}
-              trackColor={{ false: '#d1d1d6', true: '#d6e4ff' }}
+              thumbColor={preferences.enabled ? DesignTokens.colors.tint : '#f4f3f4'}
+              trackColor={{ false: '#d1d1d6', true: DesignTokens.isDarkMode ? '#2c2c2e' : '#d6e4ff' }}
+              ios_backgroundColor="#3e3e41"
             />
           </View>
           <Text style={styles.metaText}>System: {systemSettings}</Text>
@@ -136,7 +145,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
           </TouchableOpacity>
         </MaterialCard>
 
-        <MaterialCard style={styles.card} variant="regular">
+        <MaterialCard style={styles.card} variant="solid-elevated">
           <Text style={styles.sectionTitle}>Frequency</Text>
           <Text style={styles.sectionHelper}>Choose how often Voice Analyzer can reach out</Text>
           <View style={styles.frequencyGrid}>
@@ -160,7 +169,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
           </View>
         </MaterialCard>
 
-        <MaterialCard style={styles.card} variant="regular">
+        <MaterialCard style={styles.card} variant="solid-elevated">
           <Text style={styles.sectionTitle}>Preferred time</Text>
           <Text style={styles.sectionHelper}>
             Voice Analyzer avoids quiet hours and targets your ideal reminder window.
@@ -175,13 +184,14 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
             step={1}
             value={preferences.preferredHour}
             onSlidingComplete={handleHourChange}
-            minimumTrackTintColor={COLORS.tintColor}
-            maximumTrackTintColor="#d1d1d6"
+            minimumTrackTintColor={DesignTokens.colors.tint}
+            maximumTrackTintColor={DesignTokens.isDarkMode ? '#444' : '#d1d1d6'}
+            thumbTintColor={Platform.OS === 'android' ? DesignTokens.colors.tint : undefined}
           />
           <Text style={styles.metaText}>Quiet hours respected automatically</Text>
         </MaterialCard>
 
-        <MaterialCard style={styles.card} variant="regular">
+        <MaterialCard style={styles.card} variant="solid-elevated">
           <View style={styles.listHeader}>
             <View>
               <Text style={styles.sectionTitle}>Scheduled nudges</Text>
@@ -212,148 +222,142 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
           )}
         </MaterialCard>
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
+// ... (helper functions remain the same)
 function formatHourLabel(hour: number): string {
-  const date = new Date();
-  date.setHours(hour, 0, 0, 0);
-  return date.toLocaleTimeString([], { hour: 'numeric' });
-}
-
-function formatTypeLabel(type: ScheduledNotification['type']): string {
-  switch (type) {
-    case 'celebration':
-      return 'Win';
-    case 'gentleReminder':
-      return 'Reminder';
-    case 'milestone':
-      return 'Milestone';
-    case 'valueForward':
-    default:
-      return 'Insight';
+    const date = new Date();
+    date.setHours(hour, 0, 0, 0);
+    return date.toLocaleTimeString([], { hour: 'numeric' });
   }
-}
-
-function formatSystemSettings(settings: Record<string, unknown>): string {
-  const keys = Object.entries(settings)
-    .filter(([, value]) => value)
-    .map(([key]) => key.replace(/([A-Z])/g, ' $1').toLowerCase());
-  return keys.length ? keys.join(', ') : 'Alerts disabled at OS level';
-}
+  
+  function formatTypeLabel(type: ScheduledNotification['type']): string {
+    switch (type) {
+      case 'celebration':
+        return 'Win';
+      case 'gentleReminder':
+        return 'Reminder';
+      case 'milestone':
+        return 'Milestone';
+      case 'valueForward':
+      default:
+        return 'Insight';
+    }
+  }
+  
+  function formatSystemSettings(settings: Record<string, unknown>): string {
+    const keys = Object.entries(settings)
+      .filter(([, value]) => value)
+      .map(([key]) => key.replace(/([A-Z])/g, ' $1').toLowerCase());
+    return keys.length ? keys.join(', ') : 'Alerts disabled at OS level';
+  }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
+    backgroundColor: DesignTokens.colors.bgPrimary,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background,
+    backgroundColor: DesignTokens.colors.bgPrimary,
   },
   loadingText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.secondaryLabel,
-  },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    gap: SPACING.sm,
+    ...Typography.body,
+    color: DesignTokens.colors.textSecondary,
   },
   backButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: DesignTokens.spacing.xs,
+  },
+  backButtonIcon: {
+    fontSize: 22,
+    color: DesignTokens.colors.tint,
   },
   backButtonText: {
-    fontSize: 16,
-    color: COLORS.tintColor,
+    ...Typography.body,
+    color: DesignTokens.colors.tint,
     fontWeight: '600',
   },
-  topTitle: {
-    ...TYPOGRAPHY.title2,
-    color: COLORS.label,
-    flex: 1,
-  },
   scrollContent: {
-    paddingBottom: SPACING.xxl,
-    gap: SPACING.md,
+    paddingTop: 120, // HEADER_MAX_HEIGHT
+    paddingBottom: DesignTokens.spacing.xl,
+    gap: DesignTokens.spacing.lg,
   },
   card: {
-    marginHorizontal: SPACING.md,
-    gap: SPACING.sm,
+    marginHorizontal: DesignTokens.spacing.md,
+    gap: DesignTokens.spacing.sm,
   },
   sectionTitle: {
-    ...TYPOGRAPHY.title3,
-    color: COLORS.label,
+    ...Typography.title2,
+    color: DesignTokens.colors.textPrimary,
   },
   sectionHelper: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginTop: SPACING.sm,
+    marginTop: DesignTokens.spacing.sm,
   },
   rowLabel: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.label,
+    ...Typography.body,
+    color: DesignTokens.colors.textPrimary,
   },
   metaText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
   },
   secondaryButton: {
     alignSelf: 'flex-start',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderRadius: 999,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: COLORS.tintColor,
+    marginTop: DesignTokens.spacing.sm,
+    paddingHorizontal: DesignTokens.spacing.md,
+    paddingVertical: DesignTokens.spacing.sm,
+    borderRadius: DesignTokens.radii.pill,
+    borderWidth: 1,
+    borderColor: DesignTokens.colors.tint,
   },
   secondaryButtonText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.tintColor,
+    ...Typography.caption1,
+    color: DesignTokens.colors.tint,
     fontWeight: '600',
   },
   frequencyGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.sm,
-    marginTop: SPACING.sm,
+    flexDirection: 'column',
+    gap: DesignTokens.spacing.sm,
+    marginTop: DesignTokens.spacing.sm,
   },
   frequencyPill: {
-    flex: 1,
-    minWidth: 100,
-    borderRadius: 16,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(0,0,0,0.1)',
-    padding: SPACING.sm,
+    borderRadius: DesignTokens.radii.lg,
+    borderWidth: 1,
+    borderColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)',
+    padding: DesignTokens.spacing.md,
+    backgroundColor: DesignTokens.isDarkMode ? DesignTokens.colors.bgPrimary : DesignTokens.colors.bgCard,
   },
   frequencyPillActive: {
-    borderColor: COLORS.tintColor,
-    backgroundColor: 'rgba(36,107,253,0.08)',
+    borderColor: DesignTokens.colors.tint,
+    backgroundColor: DesignTokens.isDarkMode ? 'rgba(82,139,255,0.2)' : 'rgba(36,107,253,0.08)',
   },
   frequencyLabel: {
-    ...TYPOGRAPHY.headline,
-    fontSize: 16,
-    color: COLORS.label,
+    ...Typography.body,
+    fontWeight: '600',
+    color: DesignTokens.colors.textPrimary,
   },
   frequencyLabelActive: {
-    color: COLORS.tintColor,
+    color: DesignTokens.colors.tint,
   },
   frequencyHelper: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
   },
   frequencyHelperActive: {
-    color: COLORS.tintColor,
+    color: DesignTokens.colors.tint,
   },
   sliderHeader: {
     flexDirection: 'row',
@@ -361,12 +365,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sliderLabel: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.label,
+    ...Typography.body,
+    color: DesignTokens.colors.textPrimary,
   },
   sliderValue: {
-    ...TYPOGRAPHY.headline,
-    color: COLORS.tintColor,
+    ...Typography.title2,
+    fontWeight: '600',
+    color: DesignTokens.colors.tint,
   },
   listHeader: {
     flexDirection: 'row',
@@ -374,35 +379,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clearButton: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.tintColor,
+    ...Typography.caption1,
+    color: DesignTokens.colors.tint,
     fontWeight: '600',
   },
   scheduledRow: {
     flexDirection: 'row',
-    gap: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    gap: DesignTokens.spacing.sm,
+    paddingVertical: DesignTokens.spacing.xs,
     alignItems: 'center',
   },
   scheduledBadge: {
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: DesignTokens.spacing.sm,
     paddingVertical: 4,
-    borderRadius: 999,
-    backgroundColor: 'rgba(36,107,253,0.1)',
+    borderRadius: DesignTokens.radii.pill,
+    backgroundColor: DesignTokens.isDarkMode ? 'rgba(82,139,255,0.2)' : 'rgba(36,107,253,0.1)',
   },
   scheduledBadgeText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.tintColor,
+    ...Typography.caption2,
+    color: DesignTokens.colors.tint,
+    fontWeight: '600',
   },
   scheduledInfo: {
     flex: 1,
   },
   scheduledTitle: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.label,
+    ...Typography.body,
+    color: DesignTokens.colors.textPrimary,
   },
   scheduledMeta: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption2,
+    color: DesignTokens.colors.textSecondary,
   },
 });

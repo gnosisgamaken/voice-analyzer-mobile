@@ -1,0 +1,69 @@
+appId: com.voiceanalyzer.mobile
+---
+# Test: View Recording Details and Delete
+# Verifies: Navigate to details → View metrics → Delete recording
+
+- launchApp
+- assertVisible: "Voice Analyzer"
+
+# Navigate to recordings list
+- tapOn: "History"
+- assertVisible: "Recordings"
+
+# Verify at least one recording exists
+- assertVisible:
+    id: "recording-card"
+
+# Get the name of the first recording for verification
+- tapOn:
+    index: 0
+    id: "recording-card"
+
+# Verify recording details screen loaded
+- assertVisible: "Recording Details"
+- assertVisible: "Back"
+
+# Scroll to view all sections
+- scroll:
+    direction: DOWN
+
+# Verify all key sections are present
+- assertVisible: "Duration"
+- assertVisible: "Playback"
+- assertVisible: "Voice IQ™"
+- assertVisible: "Vocal Metrics"
+
+# Scroll back up
+- scroll:
+    direction: UP
+
+# Go back to list
+- tapOn:
+    id: "back-button"
+- assertVisible: "Recordings"
+
+# Delete the first recording
+- tapOn:
+    id: "delete-button"
+    index: 0
+
+# Confirm deletion in alert
+- tapOn: "Delete"
+
+# Verify recording was removed
+# (This assertion depends on whether the list updates immediately)
+- waitForAnimationToEnd:
+    timeout: 1000
+
+# If there were multiple recordings, verify list still shows recordings
+# If it was the only recording, verify empty state
+- runFlow:
+    when:
+      visible: "recording-card"
+    commands:
+      - assertVisible: "Recordings"
+- runFlow:
+    when:
+      notVisible: "recording-card"
+    commands:
+      - assertVisible: "No recordings yet"

@@ -9,6 +9,20 @@
 
 ## 📊 **CURRENT STATE SUMMARY**
 
+## 🔜 Sprint 1 Backlog (Codex 5.1)
+
+**Status:** Design system + haptics ✅ (Gemini + Codex). React Navigation shell ✅ (Codex). Remaining Sprint 1 items below.
+
+1. **Dev-only Gallery & Docs (Gemini)**
+   - Gate the new Gallery tab behind a dev flag and update README instructions accordingly.
+   - Ensure SF Symbol fallbacks behave on Android/web.
+2. **Telemetry Expansion (Codex)**
+   - Extend `trackEvent` usage to recording start/stop, notification scheduling, and tab switches.
+3. **QA & Tests (Gemini)**
+   - Continue running `npm run test` after each merge and note regressions (baseline suite currently passing).
+
+> **Owner:** Codex 5.1 — Sprint 1 wraps with a demo build reflecting the above.
+
 ### ✅ Agent 1 Tasks (COMPLETE - feature/live-metrics-integration branch)
 - ✅ Task 1.1: Live metrics integration (commit 6de63fbd)
 - ✅ Task 1.2: Baseline & trend tracking (commit a554d5da)

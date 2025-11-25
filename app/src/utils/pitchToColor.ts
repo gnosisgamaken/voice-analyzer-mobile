@@ -1,10 +1,11 @@
 import { PITCH_RANGES } from '../constants';
 
+// Approximate RGB values matching DesignTokens
 const COLORS = {
-  BLUE: { r: 59, g: 130, b: 246 },
-  RED: { r: 255, g: 48, b: 59 },
-  YELLOW: { r: 255, g: 204, b: 0 },
-  GRAY: { r: 156, g: 163, b: 175 },
+  BLUE: { r: 36, g: 107, b: 253 }, // #246BFD (Tint)
+  RED: { r: 255, g: 59, b: 48 },   // #FF3B30 (Error)
+  YELLOW: { r: 255, g: 183, b: 3 }, // #FFB703 (Warmth)
+  GRAY: { r: 108, g: 108, b: 112 }, // #6C6C70 (TextSecondary)
 } as const;
 
 function interpolateColor(

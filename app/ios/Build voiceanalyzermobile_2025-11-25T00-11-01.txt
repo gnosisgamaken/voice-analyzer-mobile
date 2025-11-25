@@ -1,0 +1,5 @@
+
+Showing All Errors Only
+
+
+Build succeeded    25/11/25, 02:42    9105.2 seconds

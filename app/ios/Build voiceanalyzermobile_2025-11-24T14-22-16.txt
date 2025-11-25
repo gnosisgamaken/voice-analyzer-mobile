@@ -1,0 +1,303 @@
+
+Showing All Errors Only
+
+Build target react-native-safe-area-context of project Pods with configuration Release
+
+CompileC /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewShadowNode.o /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp normal arm64 c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'react-native-safe-area-context' from project 'Pods')
+    cd /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods
+    
+    Using response file: /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/82b82416624d2658e5098eb0a28c15c5-common-args.resp
+    
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x c++ -ivfsstatcache /Users/pedro/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -fno-color-diagnostics -fmodules-prune-interval\=86400 -fmodules-prune-after\=345600 -fbuild-session-file\=/Users/pedro/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -fmodules-validate-once-per-build-session -Wnon-modular-include-in-framework-module -Werror\=non-modular-include-in-framework-module -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Werror\=return-type -Wdocumentation -Wunreachable-code -Werror\=deprecated-objc-isa-usage -Werror\=objc-root-class -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wno-missing-braces -Wparentheses -Wswitch -Wunused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wempty-body -Wuninitialized -Wconditional-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wconstant-conversion -Wint-conversion -Wbool-conversion -Wenum-conversion -Wno-float-conversion -Wnon-literal-null-conversion -Wobjc-literal-conversion -Wshorten-64-to-32 -Wno-newline-eof -Wno-c++11-extensions -Wno-implicit-fallthrough -fstrict-aliasing -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Winfinite-recursion -Wmove -Wcomma -Wblock-capture-autoreleasing -Wstrict-prototypes -Wrange-loop-analysis -Wno-semicolon-before-method-body -Wunguarded-availability @/Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/82b82416624d2658e5098eb0a28c15c5-common-args.resp -DRCT_NEW_ARCH_ENABLED\=1 -include /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Target\ Support\ Files/react-native-safe-area-context/react-native-safe-area-context-prefix.pch -MMD -MT dependencies -MF /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewShadowNode.d --serialize-diagnostics /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewShadowNode.dia -c /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp -o /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-safe-area-context.build/Objects-normal/arm64/RNCSafeAreaViewShadowNode.o
+
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:3:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/conversions.h:17:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-renderercss/react/renderer/css/CSSAngle.h:13:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-renderercss/react/renderer/css/CSSDataType.h:15:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-renderercss/react/renderer/css/CSSSyntaxParser.h:150:13: warning: parameter '<ReturnT>' not found in the function declaration [-Wdocumentation]
+  150 |    * @param <ReturnT> caller-specified return type of visitors. This type will
+      |             ^~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:29: error: 'Edges' is a private member of 'facebook::yoga::Style'
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      |                             ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:557:9: note: declared private here
+  557 |   using Edges = std::array<StyleValueHandle, ordinalCount<Edge>()>;
+      |         ^
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:15:11: error: no viable conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'YGValue'
+   15 |   YGValue edgeValue = edges[edge];
+      |           ^           ~~~~~~~~~~~
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:14:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/Yoga.h:19:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGNodeStyle.h:13:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGValue.h:31:16: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'const YGValue &' for 1st argument
+   31 | typedef struct YGValue {
+      |                ^~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGValue.h:31:16: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'YGValue &&' for 1st argument
+   31 | typedef struct YGValue {
+      |                ^~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:19:11: error: no viable conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'YGValue'
+   19 |   YGValue axisValue = edges[axis];
+      |           ^           ~~~~~~~~~~~
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:14:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/Yoga.h:19:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGNodeStyle.h:13:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGValue.h:31:16: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'const YGValue &' for 1st argument
+   31 | typedef struct YGValue {
+      |                ^~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGValue.h:31:16: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'YGValue &&' for 1st argument
+   31 | typedef struct YGValue {
+      |                ^~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:23:10: error: no viable conversion from returned value of type 'value_type' (aka 'facebook::yoga::StyleValueHandle') to function return type 'YGValue'
+   23 |   return edges[YGEdgeAll];
+      |          ^~~~~~~~~~~~~~~~
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:14:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/Yoga.h:19:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGNodeStyle.h:13:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGValue.h:31:16: note: candidate constructor (the implicit copy constructor) not viable: no known conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'const YGValue &' for 1st argument
+   31 | typedef struct YGValue {
+      |                ^~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/Yoga/yoga/YGValue.h:31:16: note: candidate constructor (the implicit move constructor) not viable: no known conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'YGValue &&' for 1st argument
+   31 | typedef struct YGValue {
+      |                ^~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:40:8: error: call to implicitly-deleted copy constructor of 'ConcreteProps' (aka 'facebook::react::RNCSafeAreaViewProps')
+   40 |   auto props = getConcreteProps();
+      |        ^       ~~~~~~~~~~~~~~~~~~
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:105:36: note: copy constructor of 'RNCSafeAreaViewProps' is implicitly deleted because base class 'ViewProps' (aka 'facebook::react::BaseViewProps') has a deleted copy constructor
+  105 | class RNCSafeAreaViewProps final : public ViewProps {
+      |                                    ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:28:23: note: copy constructor of 'BaseViewProps' is implicitly deleted because base class 'YogaStylableProps' has a deleted copy constructor
+   28 | class BaseViewProps : public YogaStylableProps, public AccessibilityProps {
+      |                       ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:18:27: note: copy constructor of 'YogaStylableProps' is implicitly deleted because base class 'Props' has a deleted copy constructor
+   18 | class YogaStylableProps : public Props {
+      |                           ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/AccessibilityProps.h:11:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/core/Props.h:45:3: note: 'Props' has been explicitly marked deleted here
+   45 |   Props(const Props& other) = delete;
+      |   ^
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:52:50: error: too few arguments to function call, single argument 'edge' was not specified
+   52 |     top = valueFromEdges(props.yogaStyle.padding(), YGEdgeTop, YGEdgeVertical);
+      |                          ~~~~~~~~~~~~~~~~~~~~~~~ ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:159:17: note: 'padding' declared here
+  159 |   Style::Length padding(Edge edge) const {
+      |                 ^       ~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:52:11: error: no matching function for call to 'valueFromEdges'
+   52 |     top = valueFromEdges(props.yogaStyle.padding(), YGEdgeTop, YGEdgeVertical);
+      |           ^~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:1: note: candidate function not viable: no known conversion from 'Style::Length' (aka 'facebook::yoga::StyleLength') to 'yoga::Style::Edges' (aka 'array<StyleValueHandle, ordinalCount<Edge>()>') for 1st argument
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      | ^              ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:54:48: error: too few arguments to function call, single argument 'edge' was not specified
+   54 |         valueFromEdges(props.yogaStyle.padding(), YGEdgeLeft, YGEdgeHorizontal);
+      |                        ~~~~~~~~~~~~~~~~~~~~~~~ ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:159:17: note: 'padding' declared here
+  159 |   Style::Length padding(Edge edge) const {
+      |                 ^       ~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:54:9: error: no matching function for call to 'valueFromEdges'
+   54 |         valueFromEdges(props.yogaStyle.padding(), YGEdgeLeft, YGEdgeHorizontal);
+      |         ^~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:1: note: candidate function not viable: no known conversion from 'Style::Length' (aka 'facebook::yoga::StyleLength') to 'yoga::Style::Edges' (aka 'array<StyleValueHandle, ordinalCount<Edge>()>') for 1st argument
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      | ^              ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:56:48: error: too few arguments to function call, single argument 'edge' was not specified
+   56 |         valueFromEdges(props.yogaStyle.padding(), YGEdgeBottom, YGEdgeVertical);
+      |                        ~~~~~~~~~~~~~~~~~~~~~~~ ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:159:17: note: 'padding' declared here
+  159 |   Style::Length padding(Edge edge) const {
+      |                 ^       ~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:56:9: error: no matching function for call to 'valueFromEdges'
+   56 |         valueFromEdges(props.yogaStyle.padding(), YGEdgeBottom, YGEdgeVertical);
+      |         ^~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:1: note: candidate function not viable: no known conversion from 'Style::Length' (aka 'facebook::yoga::StyleLength') to 'yoga::Style::Edges' (aka 'array<StyleValueHandle, ordinalCount<Edge>()>') for 1st argument
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      | ^              ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:58:33: error: too few arguments to function call, single argument 'edge' was not specified
+   58 |         props.yogaStyle.padding(), YGEdgeRight, YGEdgeHorizontal);
+      |         ~~~~~~~~~~~~~~~~~~~~~~~ ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:159:17: note: 'padding' declared here
+  159 |   Style::Length padding(Edge edge) const {
+      |                 ^       ~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:57:13: error: no matching function for call to 'valueFromEdges'
+   57 |     right = valueFromEdges(
+      |             ^~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:1: note: candidate function not viable: no known conversion from 'Style::Length' (aka 'facebook::yoga::StyleLength') to 'yoga::Style::Edges' (aka 'array<StyleValueHandle, ordinalCount<Edge>()>') for 1st argument
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      | ^              ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:60:49: error: too few arguments to function call, single argument 'edge' was not specified
+   60 |     top = valueFromEdges(props.yogaStyle.margin(), YGEdgeTop, YGEdgeVertical);
+      |                          ~~~~~~~~~~~~~~~~~~~~~~ ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:145:17: note: 'margin' declared here
+  145 |   Style::Length margin(Edge edge) const {
+      |                 ^      ~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:60:11: error: no matching function for call to 'valueFromEdges'
+   60 |     top = valueFromEdges(props.yogaStyle.margin(), YGEdgeTop, YGEdgeVertical);
+      |           ^~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:1: note: candidate function not viable: no known conversion from 'Style::Length' (aka 'facebook::yoga::StyleLength') to 'yoga::Style::Edges' (aka 'array<StyleValueHandle, ordinalCount<Edge>()>') for 1st argument
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      | ^              ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:62:47: error: too few arguments to function call, single argument 'edge' was not specified
+   62 |         valueFromEdges(props.yogaStyle.margin(), YGEdgeLeft, YGEdgeHorizontal);
+      |                        ~~~~~~~~~~~~~~~~~~~~~~ ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:145:17: note: 'margin' declared here
+  145 |   Style::Length margin(Edge edge) const {
+      |                 ^      ~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:62:9: error: no matching function for call to 'valueFromEdges'
+   62 |         valueFromEdges(props.yogaStyle.margin(), YGEdgeLeft, YGEdgeHorizontal);
+      |         ^~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:1: note: candidate function not viable: no known conversion from 'Style::Length' (aka 'facebook::yoga::StyleLength') to 'yoga::Style::Edges' (aka 'array<StyleValueHandle, ordinalCount<Edge>()>') for 1st argument
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      | ^              ~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:64:47: error: too few arguments to function call, single argument 'edge' was not specified
+   64 |         valueFromEdges(props.yogaStyle.margin(), YGEdgeBottom, YGEdgeVertical);
+      |                        ~~~~~~~~~~~~~~~~~~~~~~ ^
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:1:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.h:5:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/ReactCodegen/react/renderer/components/safeareacontext/Props.h:12:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/ViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/HostPlatformViewProps.h:10:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/BaseViewProps.h:11:
+In file included from /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Public/React-Fabric/react/renderer/components/view/YogaStylableProps.h:10:
+/Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Headers/Private/Yoga/yoga/style/Style.h:145:17: note: 'margin' declared here
+  145 |   Style::Length margin(Edge edge) const {
+      |                 ^      ~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:64:9: error: no matching function for call to 'valueFromEdges'
+   64 |         valueFromEdges(props.yogaStyle.margin(), YGEdgeBottom, YGEdgeVertical);
+      |         ^~~~~~~~~~~~~~
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:1: note: candidate function not viable: no known conversion from 'Style::Length' (aka 'facebook::yoga::StyleLength') to 'yoga::Style::Edges' (aka 'array<StyleValueHandle, ordinalCount<Edge>()>') for 1st argument
+   14 | valueFromEdges(yoga::Style::Edges edges, YGEdge edge, YGEdge axis) {
+      | ^              ~~~~~~~~~~~~~~~~~~~~~~~~
+fatal error: too many errors emitted, stopping now [-ferror-limit=]
+1 warning and 20 errors generated.
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:14:29: 'Edges' is a private member of 'facebook::yoga::Style'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:15:11: No viable conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'YGValue'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:19:11: No viable conversion from 'value_type' (aka 'facebook::yoga::StyleValueHandle') to 'YGValue'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:23:10: No viable conversion from returned value of type 'value_type' (aka 'facebook::yoga::StyleValueHandle') to function return type 'YGValue'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:40:8: Call to implicitly-deleted copy constructor of 'ConcreteProps' (aka 'facebook::react::RNCSafeAreaViewProps')
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:52:50: Too few arguments to function call, single argument 'edge' was not specified
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:52:11: No matching function for call to 'valueFromEdges'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:54:48: Too few arguments to function call, single argument 'edge' was not specified
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:54:9: No matching function for call to 'valueFromEdges'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:56:48: Too few arguments to function call, single argument 'edge' was not specified
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:56:9: No matching function for call to 'valueFromEdges'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:58:33: Too few arguments to function call, single argument 'edge' was not specified
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:57:13: No matching function for call to 'valueFromEdges'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:60:49: Too few arguments to function call, single argument 'edge' was not specified
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:60:11: No matching function for call to 'valueFromEdges'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:62:47: Too few arguments to function call, single argument 'edge' was not specified
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:62:9: No matching function for call to 'valueFromEdges'
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:64:47: Too few arguments to function call, single argument 'edge' was not specified
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/react-native-safe-area-context/common/cpp/react/renderer/components/safeareacontext/RNCSafeAreaViewShadowNode.cpp:64:9: No matching function for call to 'valueFromEdges'
+
+too many errors emitted, stopping now
+
+
+
+Build failed    24/11/25, 14:24    131.9 seconds

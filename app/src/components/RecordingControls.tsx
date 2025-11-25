@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet, Animated } from 'react-native';
-import type { HapticFeedbackTypes } from 'react-native-haptic-feedback';
 import { RecordingState } from '../types';
 import { formatTime } from '../utils/formatting';
-import { COLORS, TYPOGRAPHY } from '../constants';
-import { triggerHaptic } from '../utils/haptics';
+import { DesignTokens } from '../design/tokens';
+import { Typography } from '../design/typography';
+import { useHaptics } from '../hooks/useHaptics';
 
 interface RecordingControlsProps {
   recordingState: RecordingState;
@@ -31,6 +31,7 @@ export default function RecordingControls({
   onStop,
 }: RecordingControlsProps) {
   const pulse = useRef(new Animated.Value(1)).current;
+  const haptics = useHaptics();
 
   useEffect(() => {
     let animation: Animated.CompositeAnimation | null = null;
@@ -50,28 +51,32 @@ export default function RecordingControls({
   }, [pulse, recordingState]);
 
   const handleStart = async () => {
-    triggerHaptic('impactMedium' as HapticFeedbackTypes);
+    haptics.impactMedium();
     onStart();
   };
 
   const handlePause = async () => {
-    triggerHaptic('impactLight' as HapticFeedbackTypes);
+    haptics.impactLight();
     onPause();
   };
 
   const handleResume = async () => {
-    triggerHaptic('impactMedium' as HapticFeedbackTypes);
+    haptics.impactMedium();
     onResume();
   };
 
   const handleStop = async () => {
-    triggerHaptic('notificationSuccess' as HapticFeedbackTypes);
+    haptics.success();
     onStop();
   };
 
   const renderRecordButton = () => (
     <Animated.View style={{ transform: [{ scale: pulse }] }}>
-      <TouchableOpacity style={[styles.button, styles.recordButton]} onPress={handleStart}>
+      <TouchableOpacity
+        testID="record-button"
+        style={[styles.button, styles.recordButton]}
+        onPress={handleStart}
+      >
         <View style={styles.recordDot} />
       </TouchableOpacity>
     </Animated.View>
@@ -86,14 +91,22 @@ export default function RecordingControls({
 
         {recordingState === 'recording' && (
           <>
-            <TouchableOpacity style={[styles.button, styles.secondaryButton]} onPress={handlePause}>
+            <TouchableOpacity
+              testID="pause-button"
+              style={[styles.button, styles.secondaryButton]}
+              onPress={handlePause}
+            >
               <View style={styles.pauseIcon}>
                 <View style={styles.pauseBar} />
                 <View style={styles.pauseBar} />
               </View>
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.button, styles.stopButton]} onPress={handleStop}>
+            <TouchableOpacity
+              testID="stop-button"
+              style={[styles.button, styles.stopButton]}
+              onPress={handleStop}
+            >
               <View style={styles.stopSquare} />
             </TouchableOpacity>
           </>
@@ -101,7 +114,11 @@ export default function RecordingControls({
 
         {recordingState === 'paused' && (
           <>
-            <TouchableOpacity style={[styles.button, styles.recordButton]} onPress={handleResume}>
+            <TouchableOpacity
+              testID="resume-button"
+              style={[styles.button, styles.recordButton]}
+              onPress={handleResume}
+            >
               <View style={styles.playIcon} />
             </TouchableOpacity>
             <TouchableOpacity style={[styles.button, styles.stopButton]} onPress={handleStop}>
@@ -130,7 +147,7 @@ const styles = StyleSheet.create({
   timer: {
     fontSize: 48,
     fontWeight: '700',
-    color: COLORS.label,
+    color: DesignTokens.colors.textPrimary,
     fontVariant: ['tabular-nums'],
   },
   controls: {
@@ -151,13 +168,13 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   recordButton: {
-    backgroundColor: COLORS.critical,
+    backgroundColor: DesignTokens.colors.error,
   },
   secondaryButton: {
-    backgroundColor: COLORS.primaryMuted,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   stopButton: {
-    backgroundColor: COLORS.primaryMuted,
+    backgroundColor: 'rgba(255,255,255,0.08)',
   },
   recordDot: {
     width: 26,
@@ -206,14 +223,14 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.secondaryLabel,
+    backgroundColor: DesignTokens.colors.textSecondary,
   },
   recording: {
-    backgroundColor: COLORS.critical,
+    backgroundColor: DesignTokens.colors.error,
   },
   statusText: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.secondaryLabel,
+    ...Typography.caption1,
+    color: DesignTokens.colors.textSecondary,
     textAlign: 'center',
     flex: 1,
   },

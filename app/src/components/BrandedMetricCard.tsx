@@ -14,7 +14,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ViewStyle, Pressable } from 'react-native';
 import { MaterialCard } from './MaterialCard';
-import { COLORS, SPACING, TYPOGRAPHY } from '../constants';
+import { DesignTokens } from '../design/tokens';
+import { Typography } from '../design/typography';
 import { getBrandedMetricDetails } from '../utils/brandedMetricsEngine';
 
 export interface BrandedMetricCardProps {
@@ -39,7 +40,7 @@ export const BrandedMetricCard: React.FC<BrandedMetricCardProps> = ({
   const details = getBrandedMetricDetails(metricName, score);
 
   const cardContent = (
-    <MaterialCard style={[styles.card, style]} contentStyle={styles.cardContent}>
+    <MaterialCard style={StyleSheet.flatten([styles.card, style])} contentStyle={styles.cardContent}>
       {/* Header: Icon + Name */}
       <View style={styles.header}>
         <View style={[styles.iconBadge, { backgroundColor: `${details.color}20` }]}>
@@ -60,10 +61,10 @@ export const BrandedMetricCard: React.FC<BrandedMetricCardProps> = ({
                 {
                   color:
                     trend.direction === 'up'
-                      ? COLORS.success
+                      ? DesignTokens.colors.health
                       : trend.direction === 'down'
-                      ? COLORS.error
-                      : COLORS.secondaryLabel,
+                        ? DesignTokens.colors.error
+                        : DesignTokens.colors.textSecondary,
                 },
               ]}
             >
@@ -133,7 +134,7 @@ export const VoiceIQDisplay: React.FC<VoiceIQDisplayProps> = ({ score, style, on
   const details = getBrandedMetricDetails('voiceIQ', score);
 
   return (
-    <MaterialCard style={[styles.voiceIQCard, style]} contentStyle={styles.voiceIQContent}>
+    <MaterialCard style={StyleSheet.flatten([styles.voiceIQCard, style])} contentStyle={styles.voiceIQContent}>
       {/* Header */}
       <View style={styles.voiceIQHeader}>
         <Text style={styles.voiceIQIcon}>{details.icon}</Text>
@@ -184,13 +185,13 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   cardContent: {
-    padding: SPACING.md,
-    gap: SPACING.sm,
+    padding: DesignTokens.spacing.md,
+    gap: DesignTokens.spacing.sm,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: DesignTokens.spacing.sm,
   },
   iconBadge: {
     width: 40,
@@ -203,10 +204,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
   metricName: {
-    ...TYPOGRAPHY.headline,
+    ...Typography.title2,
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.label,
+    color: DesignTokens.colors.textPrimary,
   },
   scoreSection: {
     flexDirection: 'row',
@@ -221,15 +222,15 @@ const styles = StyleSheet.create({
   scoreLabel: {
     fontSize: 16,
     fontWeight: '500',
-    color: COLORS.secondaryLabel,
+    color: DesignTokens.colors.textSecondary,
     marginBottom: 10,
   },
   trendContainer: {
-    marginLeft: SPACING.xs,
+    marginLeft: DesignTokens.spacing.xs,
     marginBottom: 10,
   },
   trendLabel: {
-    ...TYPOGRAPHY.caption,
+    ...DesignTokens.typography.caption1,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -248,7 +249,7 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   labelText: {
-    ...TYPOGRAPHY.caption,
+    ...Typography.caption1,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -266,9 +267,9 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
   description: {
-    ...TYPOGRAPHY.caption,
+    ...Typography.caption2,
     fontSize: 12,
-    color: COLORS.secondaryLabel,
+    color: DesignTokens.colors.textSecondary,
     marginTop: 4,
   },
 
@@ -277,14 +278,14 @@ const styles = StyleSheet.create({
     borderRadius: 20,
   },
   voiceIQContent: {
-    padding: SPACING.lg,
+    padding: DesignTokens.spacing.lg,
     alignItems: 'center',
-    gap: SPACING.md,
+    gap: DesignTokens.spacing.md,
   },
   voiceIQHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: DesignTokens.spacing.sm,
   },
   voiceIQIcon: {
     fontSize: 32,
@@ -295,12 +296,12 @@ const styles = StyleSheet.create({
   voiceIQTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: COLORS.label,
+    color: DesignTokens.colors.textPrimary,
   },
   voiceIQSubtitle: {
-    ...TYPOGRAPHY.caption,
+    ...Typography.caption1,
     fontSize: 14,
-    color: COLORS.secondaryLabel,
+    color: DesignTokens.colors.textSecondary,
   },
   scoreCircle: {
     width: 180,
@@ -322,7 +323,7 @@ const styles = StyleSheet.create({
   voiceIQScoreLabel: {
     fontSize: 18,
     fontWeight: '500',
-    color: COLORS.secondaryLabel,
+    color: DesignTokens.colors.textSecondary,
     marginTop: -8,
   },
   progressRing: {
@@ -345,15 +346,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   learnMore: {
-    ...TYPOGRAPHY.caption,
+    ...Typography.caption1,
     fontSize: 14,
-    color: COLORS.tintColor,
-    marginTop: SPACING.xs,
+    color: DesignTokens.colors.tint,
+    marginTop: DesignTokens.spacing.xs,
   },
   learnMoreHint: {
-    ...TYPOGRAPHY.caption,
-    color: COLORS.tintColor,
-    marginTop: SPACING.xs,
+    ...Typography.caption1,
+    color: DesignTokens.colors.tint,
+    marginTop: DesignTokens.spacing.xs,
     fontWeight: '600',
   },
 });

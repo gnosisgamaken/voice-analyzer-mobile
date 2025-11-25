@@ -1,0 +1,38 @@
+
+Showing All Errors Only
+Prepare build
+Prepare packages
+Build target hermes-engine
+Build target React-cxxreact-React-cxxreact_privacy
+Build target React-Core
+Build target React-Core-React-Core_privacy
+Build target RNCAsyncStorage-RNCAsyncStorage_resources
+Build target boost-boost_privacy
+Build target RCT-Folly-RCT-Folly_privacy
+Build target glog-glog_privacy
+Build target React-RCTFBReactNativeSpec
+Build target RNAudioRecorderPlayer
+Build target ReactCodegen
+Build target react-native-geolocation-service
+Build target react-native-slider
+CompileC /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-slider.build/Objects-normal/arm64/RNCSliderComponentView.o /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm normal arm64 objective-c++ com.apple.compilers.llvm.clang.1_0.compiler (in target 'react-native-slider' from project 'Pods')
+    cd /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods
+    
+    Using response file: /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-slider.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp
+    
+    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c++ -ivfsstatcache /Users/pedro/Library/Developer/Xcode/DerivedData/SDKStatCaches.noindex/iphoneos26.1-23B77-69b33fc7382b27d9b5d46e82a00f8e78.sdkstatcache -fmessage-length\=0 -fdiagnostics-show-note-include-stack -fmacro-backtrace-limit\=0 -fno-color-diagnostics -fmodules-prune-interval\=86400 -fmodules-prune-after\=345600 -fbuild-session-file\=/Users/pedro/Library/Developer/Xcode/DerivedData/ModuleCache.noindex/Session.modulevalidation -fmodules-validate-once-per-build-session -Wnon-modular-include-in-framework-module -Werror\=non-modular-include-in-framework-module -Wno-trigraphs -Wno-missing-field-initializers -Wno-missing-prototypes -Werror\=return-type -Wdocumentation -Wunreachable-code -Wno-implicit-atomic-properties -Werror\=deprecated-objc-isa-usage -Wno-objc-interface-ivars -Werror\=objc-root-class -Wno-arc-repeated-use-of-weak -Wimplicit-retain-self -Wno-non-virtual-dtor -Wno-overloaded-virtual -Wno-exit-time-destructors -Wduplicate-method-match -Wno-missing-braces -Wparentheses -Wswitch -Wunused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wempty-body -Wuninitialized -Wconditional-uninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wconstant-conversion -Wint-conversion -Wbool-conversion -Wenum-conversion -Wno-float-conversion -Wnon-literal-null-conversion -Wobjc-literal-conversion -Wshorten-64-to-32 -Wno-newline-eof -Wno-selector -Wno-strict-selector-match -Wundeclared-selector -Wdeprecated-implementations -Wno-c++11-extensions -Wno-implicit-fallthrough -fstrict-aliasing -Wprotocol -Wdeprecated-declarations -Winvalid-offsetof -Wno-sign-conversion -Winfinite-recursion -Wmove -Wcomma -Wblock-capture-autoreleasing -Wstrict-prototypes -Wrange-loop-analysis -Wno-semicolon-before-method-body -Wunguarded-availability @/Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-slider.build/Objects-normal/arm64/af3fcb34312c57c0f52879cdce924b91-common-args.resp -include /Users/pedro/Documents/voice-analyzer-mobile/app/ios/Pods/Target\ Support\ Files/react-native-slider/react-native-slider-prefix.pch -MMD -MT dependencies -MF /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-slider.build/Objects-normal/arm64/RNCSliderComponentView.d --serialize-diagnostics /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-slider.build/Objects-normal/arm64/RNCSliderComponentView.dia -c /Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm -o /Users/pedro/Library/Developer/Xcode/DerivedData/voiceanalyzermobile-dglygqsuolvpyhhjdejlbznvgbyp/Build/Intermediates.noindex/Pods.build/Release-iphoneos/react-native-slider.build/Objects-normal/arm64/RNCSliderComponentView.o
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm:5:9: fatal error: 'react/renderer/components/RNCSlider/RNCSliderComponentDescriptor.h' file not found
+    5 | #import <react/renderer/components/RNCSlider/RNCSliderComponentDescriptor.h>
+      |         ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 error generated.
+
+/Users/pedro/Documents/voice-analyzer-mobile/app/node_modules/@react-native-community/slider/ios/RNCSliderComponentView.mm:5:9: 'react/renderer/components/RNCSlider/RNCSliderComponentDescriptor.h' file not found
+
+Build target RNScreens
+Build target ReactAppDependencyProvider
+Build target voiceanalyzermobile
+Build target voiceanalyzermobile
+
+
+Activity Log Complete    24/11/25, 20:18    19.0 seconds
