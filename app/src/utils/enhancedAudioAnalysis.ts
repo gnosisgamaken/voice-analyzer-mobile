@@ -206,6 +206,23 @@ export class VoiceAnalyzer {
   }
 }
 
+function safeNumber(value: number, fallback: number = 0): number {
+  return Number.isFinite(value) ? value : fallback;
+}
+
+function sanitizeFeatures(features: AudioFeatures): AudioFeatures {
+  return {
+    spectralCentroid: safeNumber(features.spectralCentroid, 1000),
+    spectralFlatness: safeNumber(features.spectralFlatness, 0.5),
+    spectralFlux: safeNumber(features.spectralFlux, 0),
+    loudness: safeNumber(features.loudness, 0),
+    energy: safeNumber(features.energy, 0.01),
+    zcr: safeNumber(features.zcr, 0.1),
+    rms: safeNumber(features.rms, 0.1),
+    mfcc: features.mfcc,
+  };
+}
+
 export function calculateVoiceMetrics(features: AudioFeatures): {
   brightness: number;
   clarity: number;
@@ -213,22 +230,24 @@ export function calculateVoiceMetrics(features: AudioFeatures): {
   energy: number;
   pitchStability: number;
 } {
-  const brightness = normalizeSpectralCentroid(features.spectralCentroid);
+  const safe = sanitizeFeatures(features);
+
+  const brightness = normalizeSpectralCentroid(safe.spectralCentroid);
   
-  const clarity = features.spectralFlatness;
+  const clarity = safe.spectralFlatness;
   
-  const richness = 1 - features.spectralFlatness;
+  const richness = 1 - safe.spectralFlatness;
   
-  const energy = normalizeEnergy(features.energy);
+  const energy = normalizeEnergy(safe.energy);
   
-  const pitchStability = 1 - Math.min(features.spectralFlux / 1000, 1);
+  const pitchStability = 1 - Math.min(safe.spectralFlux / 1000, 1);
 
   return {
-    brightness: clamp(brightness, 0, 1),
-    clarity: clamp(clarity, 0, 1),
-    richness: clamp(richness, 0, 1),
-    energy: clamp(energy, 0, 1),
-    pitchStability: clamp(pitchStability, 0, 1),
+    brightness: clamp(safeNumber(brightness), 0, 1),
+    clarity: clamp(safeNumber(clarity), 0, 1),
+    richness: clamp(safeNumber(richness), 0, 1),
+    energy: clamp(safeNumber(energy), 0, 1),
+    pitchStability: clamp(safeNumber(pitchStability), 0, 1),
   };
 }
 
@@ -236,7 +255,8 @@ export function calculateBrandedVoiceMetrics(
   features: AudioFeatures,
   advanced?: AdvancedVoiceFeatures
 ): BrandedMetrics {
-  return voiceMetricsEngine.calculateFromAudioFeatures(features, advanced);
+  const safe = sanitizeFeatures(features);
+  return voiceMetricsEngine.calculateFromAudioFeatures(safe, advanced);
 }
 
 function normalizeSpectralCentroid(centroid: number): number {

@@ -1,4 +1,4 @@
-modules = ["nodejs-20"]
+modules = ["nodejs-22"]
 [agent]
 expertMode = true
 
@@ -12,19 +12,18 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "workflow.run"
-args = "Voice Analyzer Mobile"
+args = "TypeScript Check"
 
 [[workflows.workflow]]
-name = "Voice Analyzer Mobile"
+name = "TypeScript Check"
 author = "agent"
-
-[workflows.workflow.metadata]
-outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "cd voice-analyzer-mobile && npx expo start --clear --web --port 5000 --tunnel"
-waitForPort = 5000
+args = "cd app && npx tsc --noEmit --watch"
+
+[workflows.workflow.metadata]
+outputType = "console"
 
 [[ports]]
 localPort = 5000

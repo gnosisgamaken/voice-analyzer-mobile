@@ -1,4 +1,5 @@
 import { Buffer } from 'buffer';
+import { Platform } from 'react-native';
 import RNFS from 'react-native-fs';
 import type { VoiceSample, VoiceMetrics, SpectrumFrame } from '../types';
 import type { BrandedMetrics, AdvancedVoiceFeatures } from './VoiceMetricsEngine';
@@ -34,7 +35,20 @@ const stripFileScheme = (uri: string): string =>
 
 export async function analyzeRecordingFile(uri: string): Promise<RecordingAnalysisResult | null> {
   try {
-    const { sampleRate, samples } = await decodeWavFile(stripFileScheme(uri));
+    if (Platform.OS === 'android') {
+      logger.warn('Android audio analysis skipped - AAC format not supported. iOS required for full analysis.');
+      return null;
+    }
+
+    let decoded: { sampleRate: number; samples: Float32Array };
+    try {
+      decoded = await decodeWavFile(stripFileScheme(uri));
+    } catch (decodeError) {
+      logger.error('Failed to decode WAV file:', decodeError);
+      return null;
+    }
+
+    const { sampleRate, samples } = decoded;
     if (!samples.length) {
       return null;
     }

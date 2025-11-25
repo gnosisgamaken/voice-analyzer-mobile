@@ -8,6 +8,7 @@ import {
   Alert,
   Animated,
   Image,
+  Platform,
 } from 'react-native';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import WaveformView from '../components/WaveformView';
@@ -318,6 +319,13 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
         )}
         scrollEventThrottle={16}
       >
+        {Platform.OS === 'android' && (
+          <View style={styles.androidNotice}>
+            <Text style={styles.androidNoticeText}>
+              Android support is in beta. For full voice analysis, iOS is recommended.
+            </Text>
+          </View>
+        )}
         <LiquidGlassView style={styles.heroCard} contentStyle={styles.heroContent}>
           <View style={styles.heroHeader}>
             <Image source={HERO_ICON} style={styles.heroIcon} resizeMode="contain" />
@@ -734,5 +742,20 @@ const styles = StyleSheet.create({
   insightHelper: {
     ...Typography.caption2,
     color: DesignTokens.colors.textSecondary,
+  },
+  androidNotice: {
+    marginHorizontal: DesignTokens.spacing.md,
+    marginBottom: DesignTokens.spacing.md,
+    paddingHorizontal: DesignTokens.spacing.md,
+    paddingVertical: DesignTokens.spacing.sm,
+    backgroundColor: '#FFF3CD',
+    borderRadius: DesignTokens.radii.md,
+    borderWidth: 1,
+    borderColor: '#FFE69C',
+  },
+  androidNoticeText: {
+    ...Typography.caption1,
+    color: '#664D03',
+    textAlign: 'center',
   },
 });

@@ -43,11 +43,15 @@ const VOICE_IQ_WEIGHTS: Record<Exclude<MetricKey, 'voiceIQ'>, number> = {
   expressiveness: 0.15,
 };
 
-const clamp01 = (value: number) => Math.max(0, Math.min(1, value));
+const safeNum = (value: number, fallback: number = 0): number =>
+  Number.isFinite(value) ? value : fallback;
+
+const clamp01 = (value: number) => Math.max(0, Math.min(1, safeNum(value)));
 
 const normalizeRange = (value: number, min: number, max: number, invert = false) => {
+  const safeValue = safeNum(value, (min + max) / 2);
   if (max === min) return 0;
-  const raw = (value - min) / (max - min);
+  const raw = (safeValue - min) / (max - min);
   const normalized = clamp01(raw);
   return invert ? 1 - normalized : normalized;
 };
