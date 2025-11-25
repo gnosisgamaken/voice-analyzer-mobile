@@ -45,6 +45,7 @@ import { DesignTokens } from '../design/tokens';
 import { Typography } from '../design/typography';
 
 import SFSymbol from '../components/SFSymbol';
+import { LiquidGlassButton } from '../components/LiquidGlassButton';
 
 const HERO_ICON = require('../../assets/my-voice.png');
 
@@ -561,9 +562,14 @@ const renderBehaviorCard = (card: BehaviorCard) => (
     {card.copy.helper && <Text style={styles.guidanceHelper}>{card.copy.helper}</Text>}
     {card.copy.tags && renderTags(card.copy.tags)}
     {card.onAction && card.actionLabel && (
-      <TouchableOpacity style={styles.actionButton} onPress={card.onAction}>
-        <Text style={styles.actionButtonText}>{card.actionLabel}</Text>
-      </TouchableOpacity>
+      <LiquidGlassButton
+        title={card.actionLabel}
+        onPress={card.onAction}
+        variant="tinted"
+        size="small"
+        hapticType="selection"
+        style={styles.actionButtonWrapper}
+      />
     )}
   </MaterialCard>
 );
@@ -714,6 +720,10 @@ const styles = StyleSheet.create({
     ...Typography.caption1,
     color: '#fff',
     fontWeight: '600',
+  },
+  actionButtonWrapper: {
+    marginTop: DesignTokens.spacing.sm,
+    alignSelf: 'flex-start',
   },
   baselineProgressTrack: {
     height: 6,

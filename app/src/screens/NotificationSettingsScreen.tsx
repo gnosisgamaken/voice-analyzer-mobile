@@ -29,6 +29,7 @@ import { DesignTokens } from '../design/tokens';
 import { Typography } from '../design/typography';
 
 import SFSymbol from '../components/SFSymbol';
+import { LiquidGlassButton } from '../components/LiquidGlassButton';
 import type { NotificationsStackParamList } from '../navigation/types';
 
 type FrequencyOption = NotificationPreferences['frequency'];
@@ -151,9 +152,15 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
           </View>
           <Text style={styles.metaText}>System: {systemSettings}</Text>
           <Text style={styles.metaText}>Permission: {permissionLabel}</Text>
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleRequestPermission}>
-            <Text style={styles.secondaryButtonText}>Request permission</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonWrapper}>
+            <LiquidGlassButton
+              title="Request permission"
+              onPress={handleRequestPermission}
+              variant="secondary"
+              size="small"
+              hapticType="selection"
+            />
+          </View>
         </MaterialCard>
 
         <MaterialCard style={styles.card} variant="solid-elevated">
@@ -204,15 +211,19 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
 
         <MaterialCard style={styles.card} variant="solid-elevated">
           <View style={styles.listHeader}>
-            <View>
+            <View style={styles.listHeaderContent}>
               <Text style={styles.sectionTitle}>Scheduled nudges</Text>
               <Text style={styles.sectionHelper}>
                 Upcoming reminders queued locally. (max 1 per day)
               </Text>
             </View>
-            <TouchableOpacity onPress={handleClearScheduled}>
-              <Text style={styles.clearButton}>Clear</Text>
-            </TouchableOpacity>
+            <LiquidGlassButton
+              title="Clear"
+              onPress={handleClearScheduled}
+              variant="ghost"
+              size="small"
+              hapticType="light"
+            />
           </View>
           {scheduled.length === 0 ? (
             <Text style={styles.metaText}>No notifications scheduled yet.</Text>
@@ -383,6 +394,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: DesignTokens.spacing.sm,
+  },
+  listHeaderContent: {
+    flex: 1,
+  },
+  buttonWrapper: {
+    marginTop: DesignTokens.spacing.sm,
+    alignSelf: 'flex-start',
   },
   clearButton: {
     ...Typography.caption1,
