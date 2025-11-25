@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   Animated,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { MaterialCard } from '../components/MaterialCard';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -40,13 +41,23 @@ const FREQUENCY_OPTIONS: Array<{ label: string; value: FrequencyOption; helper: 
 
 type NotificationSettingsScreenProps = NativeStackScreenProps<NotificationsStackParamList, 'NotificationSettings'>;
 
+const HEADER_MAX_HEIGHT = 120;
+
 export default function NotificationSettingsScreen({ navigation }: NotificationSettingsScreenProps) {
   const [preferences, setPreferences] = useState<NotificationPreferences | null>(null);
   const [scheduled, setScheduled] = useState<ScheduledNotification[]>([]);
   const [systemSettings, setSystemSettings] = useState<string>('Unknown');
   const [permissionLabel, setPermissionLabel] = useState('Status unknown');
   const [loading, setLoading] = useState(true);
-  const scrollOffsetY = useRef(new Animated.Value(0)).current; // Static header offset
+  const scrollOffsetY = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+  
+  const scrollContentStyle = useMemo(() => ({
+    paddingTop: HEADER_MAX_HEIGHT + insets.top,
+    paddingHorizontal: DesignTokens.spacing.md,
+    paddingBottom: DesignTokens.spacing.xl,
+    gap: DesignTokens.spacing.lg,
+  }), [insets.top]);
 
   const loadData = useCallback(async () => {
     try {
@@ -122,7 +133,7 @@ export default function NotificationSettingsScreen({ navigation }: NotificationS
         }
       />
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
       >
         <MaterialCard style={styles.card} variant="solid-elevated">
@@ -282,11 +293,6 @@ const styles = StyleSheet.create({
     ...Typography.body,
     color: DesignTokens.colors.tint,
     fontWeight: '600',
-  },
-  scrollContent: {
-    paddingTop: 120, // HEADER_MAX_HEIGHT
-    paddingBottom: DesignTokens.spacing.xl,
-    gap: DesignTokens.spacing.lg,
   },
   card: {
     marginHorizontal: DesignTokens.spacing.md,

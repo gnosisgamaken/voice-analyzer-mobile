@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,9 @@ import {
   Animated,
   Image,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import WaveformView from '../components/WaveformView';
 import RecordingControls from '../components/RecordingControls';
@@ -82,9 +84,26 @@ const SESSION_COPY: Record<
   },
 };
 
+const HEADER_MAX_HEIGHT = 120;
+
 export default function MainRecordingScreen({ navigation }: MainRecordingScreenProps) {
   const tabNavigation = navigation.getParent<BottomTabNavigationProp<RootTabParamList>>();
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+  const windowDimensions = useWindowDimensions();
+  
+  const heroHeight = useMemo(() => {
+    const availableHeight = windowDimensions.height - insets.top - insets.bottom;
+    return Math.max(0, Math.round(availableHeight * 0.75));
+  }, [windowDimensions.height, insets.top, insets.bottom]);
+  
+  const scrollContentStyle = useMemo(() => ({
+    paddingTop: HEADER_MAX_HEIGHT + insets.top,
+    paddingHorizontal: DesignTokens.spacing.md,
+    paddingBottom: DesignTokens.spacing.xl,
+    gap: DesignTokens.spacing.lg,
+  }), [insets.top]);
+
   const {
     recordingState,
     currentSample,
@@ -102,6 +121,7 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
   const lastNotificationSession = useRef<number | null>(null);
   const [milestoneCopy, setMilestoneCopy] = useState<CopyBlock | null>(null);
   const [milestoneSignals, setMilestoneSignals] = useState<MilestoneSignals | null>(null);
+  const [showDetailedMetrics, setShowDetailedMetrics] = useState(false);
 
   const refreshBaselineStatus = useCallback(async () => {
     try {
@@ -311,7 +331,7 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
         trailingActions={headerActions}
       />
       <Animated.ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={scrollContentStyle}
         showsVerticalScrollIndicator={false}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
@@ -326,6 +346,71 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
             </Text>
           </View>
         )}
+
+        {brandedMetrics && (
+          <View style={[styles.heroSection, { minHeight: heroHeight }]}>
+            <VoiceIQDisplay
+              score={brandedMetrics.voiceIQ}
+              style={styles.voiceIQHero}
+              isHero={true}
+              onLearnMore={() => openMetricModal('voiceIQ', brandedMetrics.voiceIQ)}
+            />
+            <TouchableOpacity
+              style={styles.expandButton}
+              onPress={() => setShowDetailedMetrics(!showDetailedMetrics)}
+              accessibilityLabel={showDetailedMetrics ? 'Hide detailed metrics' : 'Show detailed metrics'}
+            >
+              <Text style={styles.expandButtonText}>
+                {showDetailedMetrics ? 'Hide Details' : 'View All Metrics'}
+              </Text>
+              <SFSymbol
+                name={showDetailedMetrics ? 'chevron.up' : 'chevron.down'}
+                style={styles.expandIcon}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {brandedMetrics && showDetailedMetrics && (
+          <View style={styles.section}>
+            <Text style={styles.sectionHeader}>Detailed Breakdown</Text>
+            <View style={styles.metricsGrid}>
+              <BrandedMetricCard
+                metricName="clarity"
+                score={brandedMetrics.clarity}
+                onPress={() => openMetricModal('clarity', brandedMetrics.clarity)}
+              />
+              <BrandedMetricCard
+                metricName="power"
+                score={brandedMetrics.power}
+                onPress={() => openMetricModal('power', brandedMetrics.power)}
+              />
+              <BrandedMetricCard
+                metricName="health"
+                score={brandedMetrics.health}
+                onPress={() => openMetricModal('health', brandedMetrics.health)}
+              />
+              <BrandedMetricCard
+                metricName="warmth"
+                score={brandedMetrics.warmth}
+                onPress={() => openMetricModal('warmth', brandedMetrics.warmth)}
+              />
+              <BrandedMetricCard
+                metricName="confidence"
+                score={brandedMetrics.confidence}
+                onPress={() => openMetricModal('confidence', brandedMetrics.confidence)}
+              />
+              <BrandedMetricCard
+                metricName="expressiveness"
+                score={brandedMetrics.expressiveness}
+                onPress={() =>
+                  openMetricModal('expressiveness', brandedMetrics.expressiveness)
+                }
+              />
+            </View>
+          </View>
+        )}
+
         <LiquidGlassView style={styles.heroCard} contentStyle={styles.heroContent}>
           <View style={styles.heroHeader}>
             <Image source={HERO_ICON} style={styles.heroIcon} resizeMode="contain" />
@@ -437,57 +522,6 @@ export default function MainRecordingScreen({ navigation }: MainRecordingScreenP
 
         {behaviorCards.map(renderBehaviorCard)}
 
-        {brandedMetrics && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Voice IQ™</Text>
-            <VoiceIQDisplay
-              score={brandedMetrics.voiceIQ}
-              style={styles.voiceIQCard}
-              onLearnMore={() => openMetricModal('voiceIQ', brandedMetrics.voiceIQ)}
-            />
-          </View>
-        )}
-
-        {brandedMetrics && (
-          <View style={styles.section}>
-            <Text style={styles.sectionHeader}>Vocal Metrics</Text>
-            <View style={styles.metricsGrid}>
-              <BrandedMetricCard
-                metricName="clarity"
-                score={brandedMetrics.clarity}
-                onPress={() => openMetricModal('clarity', brandedMetrics.clarity)}
-              />
-              <BrandedMetricCard
-                metricName="power"
-                score={brandedMetrics.power}
-                onPress={() => openMetricModal('power', brandedMetrics.power)}
-              />
-              <BrandedMetricCard
-                metricName="health"
-                score={brandedMetrics.health}
-                onPress={() => openMetricModal('health', brandedMetrics.health)}
-              />
-              <BrandedMetricCard
-                metricName="warmth"
-                score={brandedMetrics.warmth}
-                onPress={() => openMetricModal('warmth', brandedMetrics.warmth)}
-              />
-              <BrandedMetricCard
-                metricName="confidence"
-                score={brandedMetrics.confidence}
-                onPress={() => openMetricModal('confidence', brandedMetrics.confidence)}
-              />
-              <BrandedMetricCard
-                metricName="expressiveness"
-                score={brandedMetrics.expressiveness}
-                onPress={() =>
-                  openMetricModal('expressiveness', brandedMetrics.expressiveness)
-                }
-              />
-            </View>
-          </View>
-        )}
-
         {recordingState === 'stopped' && postRecordingInsight && (
           <MaterialCard style={styles.insightCard} variant="solid-flat">
             <Text style={styles.insightEyebrow}>Post-recording insight</Text>
@@ -547,13 +581,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: DesignTokens.colors.tint,
   },
-  scrollContent: {
-    paddingTop: 120, // HEADER_MAX_HEIGHT
-    paddingBottom: DesignTokens.spacing.xl,
-    gap: DesignTokens.spacing.lg,
-  },
   heroCard: {
-    marginHorizontal: DesignTokens.spacing.md,
   },
   heroContent: {
     gap: DesignTokens.spacing.sm,
@@ -623,7 +651,6 @@ const styles = StyleSheet.create({
     color: DesignTokens.colors.textSecondary,
   },
   waveformCard: {
-    marginHorizontal: DesignTokens.spacing.md,
   },
   waveContent: {
     gap: 12,
@@ -636,7 +663,6 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   guidanceCard: {
-    marginHorizontal: DesignTokens.spacing.md,
     gap: DesignTokens.spacing.xs,
   },
   guidanceEyebrow: {
@@ -712,17 +738,43 @@ const styles = StyleSheet.create({
   sectionHeader: {
     ...Typography.title2,
     color: DesignTokens.colors.textPrimary,
-    paddingHorizontal: DesignTokens.spacing.md,
+  },
+  heroSection: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: DesignTokens.spacing.md,
+    marginBottom: DesignTokens.spacing.xl,
+  },
+  voiceIQHero: {
+    flex: 1,
+    width: '100%',
+    justifyContent: 'center',
   },
   voiceIQCard: {
-    marginHorizontal: DesignTokens.spacing.md,
+  },
+  expandButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: DesignTokens.spacing.xs,
+    paddingHorizontal: DesignTokens.spacing.lg,
+    paddingVertical: DesignTokens.spacing.sm,
+    backgroundColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)',
+    borderRadius: DesignTokens.radii.pill,
+  },
+  expandButtonText: {
+    ...Typography.body,
+    color: DesignTokens.colors.tint,
+    fontWeight: '600',
+  },
+  expandIcon: {
+    width: 16,
+    height: 16,
+    tintColor: DesignTokens.colors.tint,
   },
   metricsGrid: {
     gap: DesignTokens.spacing.md,
-    paddingHorizontal: DesignTokens.spacing.md,
   },
   insightCard: {
-    marginHorizontal: DesignTokens.spacing.md,
     gap: DesignTokens.spacing.xs,
   },
   insightEyebrow: {
@@ -744,7 +796,6 @@ const styles = StyleSheet.create({
     color: DesignTokens.colors.textSecondary,
   },
   androidNotice: {
-    marginHorizontal: DesignTokens.spacing.md,
     marginBottom: DesignTokens.spacing.md,
     paddingHorizontal: DesignTokens.spacing.md,
     paddingVertical: DesignTokens.spacing.sm,

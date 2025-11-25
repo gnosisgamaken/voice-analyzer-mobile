@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, Animated, ScrollView } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LargeTitleHeader } from '../components/LargeTitleHeader';
 import { MaterialCard } from '../components/MaterialCard';
 import { DesignTokens } from '../design/tokens';
@@ -7,8 +8,18 @@ import { Typography } from '../design/typography';
 
 import SFSymbol from '../components/SFSymbol';
 
+const HEADER_MAX_HEIGHT = 120;
+
 export default function DesignSystemGalleryScreen() {
   const scrollOffsetY = useRef(new Animated.Value(0)).current;
+  const insets = useSafeAreaInsets();
+  
+  const scrollContentStyle = useMemo(() => ({
+    paddingTop: HEADER_MAX_HEIGHT + insets.top,
+    paddingHorizontal: DesignTokens.spacing.md,
+    paddingBottom: DesignTokens.spacing.xl,
+    gap: DesignTokens.spacing.lg,
+  }), [insets.top]);
 
   const headerActions = (
     <View style={styles.headerActions}>
@@ -24,7 +35,7 @@ export default function DesignSystemGalleryScreen() {
         trailingActions={headerActions}
       />
       <Animated.ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={scrollContentStyle}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollOffsetY } } }],
           { useNativeDriver: false }
@@ -91,12 +102,6 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: DesignTokens.colors.bgPrimary,
-  },
-  scrollContent: {
-    paddingTop: 120, // HEADER_MAX_HEIGHT
-    paddingHorizontal: DesignTokens.spacing.md,
-    paddingBottom: DesignTokens.spacing.xl,
-    gap: DesignTokens.spacing.lg,
   },
   headerActions: {
     flexDirection: 'row',

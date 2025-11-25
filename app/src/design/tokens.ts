@@ -3,57 +3,60 @@ import { Dimensions, Appearance } from 'react-native';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 const systemPrefersDark = Appearance.getColorScheme() === 'dark';
-const brandLocksDarkMode = true;
-// Brand direction is an ultra-dark, neon glass aesthetic that should remain
-// consistent regardless of the OS light/dark toggle. We still read the system
-// value so future user settings can opt back into light if needed.
-const isDarkMode = brandLocksDarkMode || systemPrefersDark;
+const isDarkMode = systemPrefersDark;
 
-// #region Colors
+// #region Colors - Apple Liquid Glass compliant palettes
 const colors = {
   light: {
-    bgPrimary: '#030615',
-    bgSecondary: '#070D26',
-    bgCard: 'rgba(17, 24, 54, 0.85)',
-    bgGlass: 'rgba(10,16,38,0.6)',
-    textPrimary: '#F5F7FF',
-    textSecondary: '#A8B2D8',
-    tint: '#7B61FF',
-    clarity: '#4DCBFF',
-    power: '#FF9E45',
-    health: '#4BE0AD',
-    expressiveness: '#F9D849',
-    confidence: '#9E7CFF',
-    warmth: '#FF7DA4',
-    error: '#FF5C73',
-    separator: 'rgba(255,255,255,0.12)',
-    shadow: 'rgba(3,6,21,0.8)',
+    bgPrimary: '#F2F2F7',
+    bgSecondary: '#FFFFFF',
+    bgCard: 'rgba(255, 255, 255, 0.72)',
+    bgGlass: 'rgba(255, 255, 255, 0.65)',
+    textPrimary: '#1C1C1E',
+    textSecondary: '#8E8E93',
+    tint: '#5856D6',
+    clarity: '#007AFF',
+    power: '#FF9500',
+    health: '#34C759',
+    expressiveness: '#FFCC00',
+    confidence: '#AF52DE',
+    warmth: '#FF2D55',
+    error: '#FF3B30',
+    separator: 'rgba(60, 60, 67, 0.18)',
+    shadow: 'rgba(0, 0, 0, 0.15)',
   },
   dark: {
-    bgPrimary: '#030615',
-    bgSecondary: '#070D26',
-    bgCard: 'rgba(17, 24, 54, 0.85)',
-    bgGlass: 'rgba(15,24,52,0.55)',
-    textPrimary: '#F5F7FF',
-    textSecondary: '#9FA9D3',
-    tint: '#6C8BFF',
-    clarity: '#4DCBFF',
-    power: '#FF9E45',
-    health: '#4BE0AD',
-    expressiveness: '#F9D849',
-    confidence: '#9E7CFF',
-    warmth: '#FF7DA4',
-    error: '#FF5C73',
-    separator: 'rgba(255,255,255,0.12)',
-    shadow: 'rgba(0,0,0,0.65)',
+    bgPrimary: '#000000',
+    bgSecondary: '#1C1C1E',
+    bgCard: 'rgba(28, 28, 30, 0.75)',
+    bgGlass: 'rgba(28, 28, 30, 0.6)',
+    textPrimary: '#FFFFFF',
+    textSecondary: '#98989D',
+    tint: '#5E5CE6',
+    clarity: '#0A84FF',
+    power: '#FF9F0A',
+    health: '#30D158',
+    expressiveness: '#FFD60A',
+    confidence: '#BF5AF2',
+    warmth: '#FF375F',
+    error: '#FF453A',
+    separator: 'rgba(84, 84, 88, 0.65)',
+    shadow: 'rgba(0, 0, 0, 0.55)',
   },
 };
 // #endregion
 
 const gradients = {
-  background: ['#030615', '#050C1E', '#071536'],
-  heroOrb: ['#47D3FF', '#7B61FF'],
-  metricCard: ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.02)'],
+  light: {
+    background: ['#F2F2F7', '#E5E5EA', '#D1D1D6'],
+    heroOrb: ['#5856D6', '#007AFF'],
+    metricCard: ['rgba(0,0,0,0.03)', 'rgba(0,0,0,0.01)'],
+  },
+  dark: {
+    background: ['#000000', '#1C1C1E', '#2C2C2E'],
+    heroOrb: ['#5E5CE6', '#0A84FF'],
+    metricCard: ['rgba(255,255,255,0.08)', 'rgba(255,255,255,0.02)'],
+  },
 };
 
 // #region Spacing
@@ -142,7 +145,7 @@ const typography = {
 
 export const DesignTokens = {
   colors: isDarkMode ? colors.dark : colors.light,
-  gradients,
+  gradients: isDarkMode ? gradients.dark : gradients.light,
   spacing,
   radii,
   motion,

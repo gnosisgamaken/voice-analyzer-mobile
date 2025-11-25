@@ -8,20 +8,24 @@ type GlassVariant = 'regular' | 'clear' | 'thin' | 'ultra';
 
 interface LiquidGlassViewProps {
   style?: StyleProp<ViewStyle>;
+  contentStyle?: ViewStyle;
   variant?: GlassVariant;
   children?: React.ReactNode;
 }
 
-const BLUR_CONFIG: Record<GlassVariant, { amount: number; type: 'light' | 'dark' | 'regular' | 'xlight' }> = {
-  thin: { amount: 16, type: 'light' },
-  regular: { amount: 22, type: 'regular' },
-  ultra: { amount: 30, type: 'dark' }, // 'prominent' is mapped to 'dark' for BlurView, so we can use 'dark' directly here.
-  clear: { amount: 12, type: 'xlight' },
+export type { LiquidGlassViewProps };
+
+const BLUR_CONFIG: Record<GlassVariant, { amount: number; lightType: 'light' | 'xlight' | 'regular'; darkType: 'dark' | 'regular' }> = {
+  thin: { amount: 16, lightType: 'xlight', darkType: 'dark' },
+  regular: { amount: 22, lightType: 'light', darkType: 'dark' },
+  ultra: { amount: 28, lightType: 'regular', darkType: 'dark' },
+  clear: { amount: 12, lightType: 'xlight', darkType: 'regular' },
 };
 
 export function LiquidGlassView({
   children,
   style,
+  contentStyle,
   variant = 'regular',
 }: LiquidGlassViewProps) {
   const reduceTransparency = useReduceTransparency();
@@ -29,14 +33,13 @@ export function LiquidGlassView({
   if (reduceTransparency) {
     return (
       <View style={[styles.container, styles.opaque, style]}>
-        {children}
+        <View style={contentStyle}>{children}</View>
       </View>
     );
   }
 
   const blurConfig = BLUR_CONFIG[variant] ?? BLUR_CONFIG.regular;
-
-  const blurType = DesignTokens.isDarkMode ? 'dark' : blurConfig.type;
+  const blurType = DesignTokens.isDarkMode ? blurConfig.darkType : blurConfig.lightType;
 
   return (
     <BlurView
@@ -45,7 +48,7 @@ export function LiquidGlassView({
       blurAmount={blurConfig.amount}
       reducedTransparencyFallbackColor={DesignTokens.colors.bgGlass}
     >
-      {children}
+      <View style={contentStyle}>{children}</View>
     </BlurView>
   );
 }

@@ -12,11 +12,13 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, Pressable, Dimensions } from 'react-native';
 import { MaterialCard } from './MaterialCard';
 import { DesignTokens } from '../design/tokens';
 import { Typography } from '../design/typography';
 import { getBrandedMetricDetails } from '../utils/brandedMetricsEngine';
+
+const SCREEN_HEIGHT = Dimensions.get('window').height;
 
 export interface BrandedMetricCardProps {
   metricName: 'clarity' | 'power' | 'health' | 'warmth' | 'confidence' | 'expressiveness';
@@ -123,39 +125,52 @@ export const BrandedMetricCard: React.FC<BrandedMetricCardProps> = ({
 /**
  * Voice IQ Display Component
  * Hero treatment for the composite Voice IQ score
+ * When isHero=true, takes up ~80% of viewport height
  */
 export interface VoiceIQDisplayProps {
   score: number;
   style?: ViewStyle;
+  isHero?: boolean;
   onLearnMore?: () => void;
 }
 
-export const VoiceIQDisplay: React.FC<VoiceIQDisplayProps> = ({ score, style, onLearnMore }) => {
+const HERO_CIRCLE_SIZE = Math.min(300, SCREEN_HEIGHT * 0.35);
+
+export const VoiceIQDisplay: React.FC<VoiceIQDisplayProps> = ({ score, style, isHero = false, onLearnMore }) => {
   const details = getBrandedMetricDetails('voiceIQ', score);
 
+  const cardStyle = isHero
+    ? StyleSheet.flatten([styles.voiceIQCard, style])
+    : StyleSheet.flatten([styles.voiceIQCard, style]);
+
+  const circleSize = isHero ? HERO_CIRCLE_SIZE : 180;
+  const scoreSize = isHero ? 80 : 64;
+  const ringWidth = isHero ? 10 : 8;
+
   return (
-    <MaterialCard style={StyleSheet.flatten([styles.voiceIQCard, style])} contentStyle={styles.voiceIQContent}>
-      {/* Header */}
+    <MaterialCard style={cardStyle} contentStyle={styles.voiceIQContent}>
       <View style={styles.voiceIQHeader}>
-        <Text style={styles.voiceIQIcon}>{details.icon}</Text>
+        <Text style={[styles.voiceIQIcon, isHero && styles.voiceIQIconHero]}>{details.icon}</Text>
         <View style={styles.voiceIQInfo}>
-          <Text style={styles.voiceIQTitle}>Voice IQ™</Text>
+          <Text style={[styles.voiceIQTitle, isHero && styles.voiceIQTitleHero]}>Voice IQ™</Text>
           <Text style={styles.voiceIQSubtitle}>Your overall vocal quality</Text>
         </View>
       </View>
 
-      {/* Large Score Circle */}
-      <View style={styles.scoreCircle}>
+      <View style={[styles.scoreCircle, { width: circleSize, height: circleSize }]}>
         <View style={styles.scoreCircleInner}>
-          <Text style={[styles.voiceIQScore, { color: details.color }]}>{details.score}</Text>
-          <Text style={styles.voiceIQScoreLabel}>/100</Text>
+          <Text style={[styles.voiceIQScore, { color: details.color, fontSize: scoreSize }]}>{details.score}</Text>
+          <Text style={[styles.voiceIQScoreLabel, isHero && { fontSize: 22 }]}>/100</Text>
         </View>
 
-        {/* Progress Ring (simplified - full implementation would use SVG/Canvas) */}
         <View
           style={[
             styles.progressRing,
             {
+              width: circleSize - 20,
+              height: circleSize - 20,
+              borderRadius: (circleSize - 20) / 2,
+              borderWidth: ringWidth,
               borderColor: `${details.color}30`,
               borderTopColor: details.color,
               transform: [{ rotate: `${String((details.score / 100) * 360)}deg` }],
@@ -164,15 +179,13 @@ export const VoiceIQDisplay: React.FC<VoiceIQDisplayProps> = ({ score, style, on
         />
       </View>
 
-      {/* Qualitative Label */}
-      <View style={[styles.voiceIQLabelPill, { backgroundColor: `${details.color}15` }]}>
-        <Text style={[styles.voiceIQLabelText, { color: details.color }]}>{details.label}</Text>
+      <View style={[styles.voiceIQLabelPill, { backgroundColor: `${details.color}15` }, isHero && styles.voiceIQLabelPillHero]}>
+        <Text style={[styles.voiceIQLabelText, { color: details.color }, isHero && styles.voiceIQLabelTextHero]}>{details.label}</Text>
       </View>
 
-      {/* Learn More (optional) */}
       {onLearnMore && (
-        <Text style={styles.learnMore} onPress={onLearnMore}>
-          Learn more →
+        <Text style={[styles.learnMore, isHero && styles.learnMoreHero]} onPress={onLearnMore}>
+          Tap to learn more →
         </Text>
       )}
     </MaterialCard>
@@ -276,11 +289,14 @@ const styles = StyleSheet.create({
   // VoiceIQDisplay Styles
   voiceIQCard: {
     borderRadius: 20,
+    flex: 1,
+    justifyContent: 'center',
   },
   voiceIQContent: {
     padding: DesignTokens.spacing.lg,
     alignItems: 'center',
     gap: DesignTokens.spacing.md,
+    justifyContent: 'center',
   },
   voiceIQHeader: {
     flexDirection: 'row',
@@ -290,6 +306,9 @@ const styles = StyleSheet.create({
   voiceIQIcon: {
     fontSize: 32,
   },
+  voiceIQIconHero: {
+    fontSize: 44,
+  },
   voiceIQInfo: {
     alignItems: 'flex-start',
   },
@@ -298,14 +317,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: DesignTokens.colors.textPrimary,
   },
+  voiceIQTitleHero: {
+    fontSize: 32,
+  },
   voiceIQSubtitle: {
     ...Typography.caption1,
     fontSize: 14,
     color: DesignTokens.colors.textSecondary,
   },
   scoreCircle: {
-    width: 180,
-    height: 180,
     alignItems: 'center',
     justifyContent: 'center',
     position: 'relative',
@@ -316,9 +336,8 @@ const styles = StyleSheet.create({
     zIndex: 2,
   },
   voiceIQScore: {
-    fontSize: 64,
     fontWeight: '700',
-    lineHeight: 72,
+    lineHeight: undefined,
   },
   voiceIQScoreLabel: {
     fontSize: 18,
@@ -328,10 +347,6 @@ const styles = StyleSheet.create({
   },
   progressRing: {
     position: 'absolute',
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    borderWidth: 8,
     zIndex: 1,
   },
   voiceIQLabelPill: {
@@ -339,17 +354,28 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 999,
   },
+  voiceIQLabelPillHero: {
+    paddingHorizontal: 28,
+    paddingVertical: 14,
+  },
   voiceIQLabelText: {
     fontSize: 16,
     fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
+  voiceIQLabelTextHero: {
+    fontSize: 18,
+  },
   learnMore: {
     ...Typography.caption1,
     fontSize: 14,
     color: DesignTokens.colors.tint,
     marginTop: DesignTokens.spacing.xs,
+  },
+  learnMoreHero: {
+    fontSize: 16,
+    marginTop: DesignTokens.spacing.md,
   },
   learnMoreHint: {
     ...Typography.caption1,

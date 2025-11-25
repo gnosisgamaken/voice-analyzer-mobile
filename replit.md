@@ -12,6 +12,48 @@ The app targets voice professionals (teachers, speakers, singers, sales professi
 
 Preferred communication style: Simple, everyday language.
 
+## Recent Changes (November 2025)
+
+### MVP Bug Fixes Applied
+- Platform-specific audio handling: Android skips WAV analysis (AAC format incompatibility)
+- NaN/Infinity validation with `safeNumber()` and `sanitizeFeatures()` functions
+- Error handling around `decodeWavFile()` with try-catch
+- Android platform beta notice displayed in UI
+- Node.js upgraded to v22.17.0
+
+### Liquid Glass Design Compliance
+- Light/dark mode adaptive support (removed forced dark mode)
+- Apple-compliant color palettes for both modes with proper contrast
+- Blur tiers properly configured (thin: 16, regular: 22, ultra: 28)
+- `LiquidGlassView` now supports `contentStyle` prop
+- `MaterialCard` supports new "regular" variant
+
+### Voice IQ Hero UX (November 2025 - Updated)
+- Voice IQ displayed as hero metric (~75% of safe-area-adjusted viewport height)
+- Dynamic hero sizing using `useWindowDimensions` hook and `useSafeAreaInsets`
+- Hero height calculation: `(windowHeight - insets.top - insets.bottom) * 0.75`
+- Voice IQ hero positioned FIRST in scroll content (immediately after header)
+- Large score circle (up to 300px, responsive to screen size)
+- Secondary metrics collapsed behind "View All Metrics" toggle
+- `showDetailedMetrics` state controls metric visibility
+- MaterialCard restructured with inner content wrapper to preserve container sizing
+
+### Layout Architecture Fixes (November 2025)
+- Safe area handling: All screens use dynamic `useSafeAreaInsets()` with `HEADER_MAX_HEIGHT + insets.top`
+- Horizontal padding unified on scroll content containers (removed duplicate card margins)
+- MaterialCard inner wrapper uses `flexShrink: 1` to prevent non-hero cards from stretching
+- VoiceIQDisplay relies on parent flex layout for sizing (no static HERO_HEIGHT constant)
+
+### Audio Analysis Pipeline Status
+- iOS: Real-time PCM streaming via native `VoicePCMStreamer` module
+- Analysis modes tracked: 'streaming' (real data), 'fallbackRecorder' (file-based), 'simulated' (dev only)
+- Android: Fallback mode due to AAC format incompatibility (recordings may show as "processing")
+
+### Known TypeScript Issues (Pre-existing)
+- Missing @types for: @react-navigation/*, react-native-safe-area-context, react-native-sfsymbols
+- Missing @types/jest for test files
+- These are dependency declaration issues, not blocking for native builds
+
 ## System Architecture
 
 ### Audio Pipeline

@@ -7,7 +7,8 @@ export type MaterialVariant =
   | 'glass-regular'
   | 'glass-clear'
   | 'solid-elevated'
-  | 'solid-flat';
+  | 'solid-flat'
+  | 'regular';
 
 interface MaterialCardProps extends PropsWithChildren {
   variant?: MaterialVariant;
@@ -25,16 +26,24 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
 
   if (variant === 'solid-flat') {
     return (
-      <View style={[containerStyle, styles.solidFlat, contentStyle]}>
-        {children}
+      <View style={[containerStyle, styles.solidFlat]}>
+        <View style={[styles.innerContent, contentStyle]}>{children}</View>
       </View>
     );
   }
 
   if (variant === 'solid-elevated') {
     return (
-      <View style={[containerStyle, styles.solidElevated, contentStyle]}>
-        {children}
+      <View style={[containerStyle, styles.solidElevated]}>
+        <View style={[styles.innerContent, contentStyle]}>{children}</View>
+      </View>
+    );
+  }
+
+  if (variant === 'regular') {
+    return (
+      <View style={[containerStyle, styles.regular]}>
+        <View style={[styles.innerContent, contentStyle]}>{children}</View>
       </View>
     );
   }
@@ -46,7 +55,7 @@ export const MaterialCard: React.FC<MaterialCardProps> = ({
       variant={glassVariant}
       style={[containerStyle, styles.glassContainer]}
     >
-      <View style={contentStyle}>{children}</View>
+      <View style={[styles.innerContent, contentStyle]}>{children}</View>
     </LiquidGlassView>
   );
 };
@@ -56,10 +65,13 @@ const styles = StyleSheet.create({
     borderRadius: DesignTokens.radii.lg,
     overflow: 'hidden',
   },
+  innerContent: {
+    flexShrink: 1,
+  },
   solidFlat: {
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    backgroundColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
     padding: DesignTokens.spacing.md,
   },
   solidElevated: {
@@ -82,7 +94,13 @@ const styles = StyleSheet.create({
   glassContainer: {
     padding: DesignTokens.spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.08)',
+    borderColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+  },
+  regular: {
+    backgroundColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: DesignTokens.isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+    padding: DesignTokens.spacing.md,
   },
 });
 
