@@ -49,6 +49,30 @@ Preferred communication style: Simple, everyday language.
 - Analysis modes tracked: 'streaming' (real data), 'fallbackRecorder' (file-based), 'simulated' (dev only)
 - Android: Fallback mode due to AAC format incompatibility (recordings may show as "processing")
 
+### Diagnostic Biomarkers (November 2025)
+**Clinical-Grade Voice Analysis:**
+- **CPP (Cepstral Peak Prominence):** Real cepstrum via inverse FFT of log-magnitude spectrum, linear regression baseline, frame-by-frame analysis with low-energy guards
+- **Enhanced Jitter:** Local jitter, RAP (3-point), PPQ5 (5-point) with clinical thresholds (normal ≤1.04%, borderline ≤2%)
+- **Enhanced Shimmer:** Local shimmer, APQ3, APQ5 with clinical thresholds (normal ≤3.5%, borderline ≤6%)
+- **HNR:** Autocorrelation-based harmonic-to-noise ratio in dB (normal ≥20dB, borderline ≥12dB)
+- **Formants:** LPC-based extraction (Levinson-Durbin with stability checks) for F1/F2/F3
+- **Vocal Tremor:** FFT-based detection in 3-12 Hz range with depth percentage
+- **Voice Breaks:** Pitch/energy transition detection with break count
+
+**Risk Assessment System:**
+- Four severity levels: low, moderate, elevated, high
+- Confidence scoring based on number of measurable factors
+- Per-factor clinical notes with educational content
+- Recommendations tailored to risk level
+
+### LiquidGlassButton Component (November 2025)
+- Spring physics animations with scale and opacity
+- ActivityIndicator for loading states
+- Haptic feedback integration (selection, impact patterns)
+- Multiple variants: primary, secondary, tertiary, glass, danger
+- Multiple sizes: small, medium, large
+- Platform-adaptive blur effects with opaque fallbacks
+
 ### Known TypeScript Issues (Pre-existing)
 - Missing @types for: @react-navigation/*, react-native-safe-area-context, react-native-sfsymbols
 - Missing @types/jest for test files
