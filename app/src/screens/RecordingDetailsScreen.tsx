@@ -66,7 +66,7 @@ export default function RecordingDetailsScreen({ navigation, route }: RecordingD
 
       const generated = generateInsights({
         latestMetrics: brandedMetrics,
-        baseline: baseline ? { isEstablished: true, metrics: baseline } : null,
+        baseline: baseline || null,
         trendAnalysis,
         history,
       });
