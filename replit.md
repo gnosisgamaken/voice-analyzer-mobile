@@ -8,6 +8,23 @@ The app targets voice professionals (teachers, speakers, singers, sales professi
 
 **Core Value Proposition:** A "Swiss-watch voice screening companion" - precise, reliable, and quietly powerful. The app establishes baselines from initial recordings, tracks trends over time, and delivers actionable insights without overwhelming users with technical jargon.
 
+## MVP Status (November 2025)
+
+**Ready for Build** - Core features implemented and tested:
+- Real-time voice recording with PCM streaming (iOS)
+- Six branded metrics + Voice IQ composite score
+- Clinical-grade diagnostic biomarkers (CPP, Jitter, Shimmer, HNR, Formants, Tremor, Voice Breaks)
+- Diagnostic risk assessment with severity levels
+- Baseline establishment and trend tracking
+- Apple Liquid Glass design system with LiquidGlassButton component
+- Insights engine with pattern detection
+
+**Build Instructions:**
+1. iOS: `cd app/ios && pod install && cd .. && npx react-native run-ios`
+2. Android: `cd app && npx react-native run-android`
+
+**Known TypeScript Issues:** Missing @types declarations for navigation and test packages - these don't affect native builds.
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
